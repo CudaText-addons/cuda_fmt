@@ -39,13 +39,16 @@ method=_
 section=commands
 caption=CudaFormatter\Configure labels...
 method=config_labels
+menu=op
 
 [item20]
 section=commands
 caption=CudaFormatter\Configure formatter...
 method=config_global
+menu=op
 
 [item21]
 section=commands
 caption=CudaFormatter\Configure formatter (local)...
 method=config_local
+menu=op
