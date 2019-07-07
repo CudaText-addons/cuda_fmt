@@ -1,0 +1,11 @@
+[info]
+title=CudaFormatter
+desc=Framework to use code formatters as 2nd-level plugins
+type=cudatext-plugin
+subdir=cuda_fmt
+homepage=https://github.com/CudaText-addons/cuda_fmt
+
+[item1]
+section=commands
+caption=CudaFormatter\Format
+method=format
