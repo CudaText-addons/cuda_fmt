@@ -2,6 +2,7 @@
 2019.07.08
 + added commands to run formatter by label A, B, C, D
 + added command to configure labels
++ added items to Options / Settings-plugins
 
 2019.07.07
 initial version
