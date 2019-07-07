@@ -49,9 +49,9 @@ class Command:
         else:
             items = [item['caption'] for item in d]
             res = app.dlg_menu(app.MENU_LIST, items, caption='Formatters for %s'%lexer)
-            if res is None: return
+            if res is None: return False
             item = d[res]
-            
+
         module = item['module']
         method = item['method']
         caption = item['caption']
@@ -68,9 +68,12 @@ class Command:
             return
 
         res = self.get_func(lexer)
-        if not res:
+        if res is None:
             app.msg_status('No formatters for lexer "%s"'%lexer)
             return
-            
+
+        if res==False:
+            return
+
         func, caption = res
         format_proc.run(func, '['+caption+'] ')
