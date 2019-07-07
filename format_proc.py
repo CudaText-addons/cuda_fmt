@@ -4,7 +4,6 @@ import os
 import shutil
 
 INI = 'cuda_someformat.cfg'
-MSG = 'Formatter: '
 
 def ini_global():
     ini = os.path.join(app_path(APP_DIR_SETTINGS), INI)
@@ -55,19 +54,19 @@ def config_local():
             msg_box('Cannot copy global config file "%s" to local folder' % INI, MB_OK)
 
 
-def run(do_format):
+def run(do_format, msg):
     if ed.get_sel_mode() != SEL_NORMAL:
-        msg_status(MSG + "Column/line selections not supported")
+        msg_status(msg + "Column/line selections not supported")
         return
 
     text = ed.get_text_sel()
     if text:
         text = do_format(text)
         if not text:
-            msg_status(MSG + "Cannot format text")
+            msg_status(msg + "Cannot format text")
             return
 
-        msg_status(MSG + "Formatted selection")
+        msg_status(msg + "Formatted selection")
 
         x0, y0, x1, y1 = ed.get_carets()[0]
         if (y0, x0)>(y1, x1):
@@ -80,13 +79,13 @@ def run(do_format):
         text1 = ed.get_text_all()
         text = do_format(text1)
         if not text:
-            msg_status(MSG + "Cannot format text")
+            msg_status(msg + "Cannot format text")
             return
 
         if text==text1:
-            msg_status(MSG + 'Text is already formatted')
+            msg_status(msg + 'Text is already formatted')
             return
 
-        msg_status(MSG + "Formatted entire text")
+        msg_status(msg + "Formatted entire text")
         ed.set_caret(0, 0)
         ed.set_text_all(text)

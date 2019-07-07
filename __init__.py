@@ -73,4 +73,4 @@ class Command:
             return
             
         func, caption = res
-        format_proc.run(func)
+        format_proc.run(func, '['+caption+'] ')
