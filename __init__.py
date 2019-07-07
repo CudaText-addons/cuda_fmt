@@ -92,6 +92,10 @@ class Command:
     def config(self, is_global):
 
         items = [item for item in self.helpers_plain if item['config']]
+        if not items:
+            app.msg_status('No configurable formatters')
+            return
+
         caps = ['%s (%s)\t%s'%(item['caption'], item['config'], item['lexers']) for item in items]
 
         res = app.dlg_menu(app.MENU_LIST_ALT, caps, caption='Formatters')
