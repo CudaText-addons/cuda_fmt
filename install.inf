@@ -9,3 +9,13 @@ homepage=https://github.com/CudaText-addons/cuda_fmt
 section=commands
 caption=CudaFormatter\Format
 method=format
+
+[item10]
+section=commands
+caption=CudaFormatter\Configure formatter...
+method=config_global
+
+[item11]
+section=commands
+caption=CudaFormatter\Configure formatter (local)...
+method=config_local

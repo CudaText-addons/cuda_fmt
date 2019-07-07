@@ -8,6 +8,7 @@ MAX_SECTIONS = 10
 
 class Command:
     helpers = {}
+    helpers_plain = []
 
     def __init__(self):
 
@@ -24,11 +25,19 @@ class Command:
                 s_lexers = app.ini_read(fn_inf, section, 'lexers', '')
                 if not s_lexers: continue
                 s_caption = app.ini_read(fn_inf, section, 'caption', '')
+                if not s_caption: continue
+                s_config = app.ini_read(fn_inf, section, 'config', '')
+
                 helper = {
-                        'caption': s_caption,
                         'module': s_module,
                         'method': s_method,
+                        'lexers': s_lexers,
+                        'caption': s_caption,
+                        'config': s_config,
                         }
+
+                self.helpers_plain.append(helper)
+
                 for s_lex in s_lexers.split(','):
                     if s_lex not in self.helpers:
                         self.helpers[s_lex] = []
@@ -55,6 +64,7 @@ class Command:
         module = item['module']
         method = item['method']
         caption = item['caption']
+
         _m = importlib.import_module(module)
         func = getattr(_m, method)
         return (func, caption)
@@ -77,3 +87,27 @@ class Command:
 
         func, caption = res
         format_proc.run(func, '['+caption+'] ')
+
+
+    def config(self, is_global):
+
+        items = [item for item in self.helpers_plain if item['config']]
+        caps = ['%s (%s)\t%s'%(item['caption'], item['config'], item['lexers']) for item in items]
+
+        res = app.dlg_menu(app.MENU_LIST_ALT, caps, caption='Formatters')
+        if res is None: return
+        item = items[res]
+
+        ini = item['config']
+        if is_global:
+            format_proc.config_global(ini)
+        else:
+            format_proc.config_local(ini)
+
+    def config_global(self):
+
+        self.config(True)
+
+    def config_local(self):
+
+        self.config(False)
