@@ -11,7 +11,7 @@ def ini_global():
     ini0 = os.path.join(os.path.dirname(__file__), INI)
     if not os.path.isfile(ini) and os.path.isfile(ini0):
         shutil.copyfile(ini0, ini)
-    return ini    
+    return ini
 
 def ini_local():
     fn = ed.get_filename()
@@ -59,30 +59,34 @@ def run(do_format):
     if ed.get_sel_mode() != SEL_NORMAL:
         msg_status(MSG + "Column/line selections not supported")
         return
-        
+
     text = ed.get_text_sel()
     if text:
         text = do_format(text)
         if not text:
             msg_status(MSG + "Cannot format text")
             return
-            
-        msg_status(MSG + "Formatting selected text")
+
+        msg_status(MSG + "Formatted selection")
 
         x0, y0, x1, y1 = ed.get_carets()[0]
         if (y0, x0)>(y1, x1):
-            x0, y0, x1, y1 = x1, y1, x0, y0 
-        
+            x0, y0, x1, y1 = x1, y1, x0, y0
+
         ed.set_caret(x0, y0)
         ed.delete(x0, y0, x1, y1)
         ed.insert(x0, y0, text)
     else:
-        text = ed.get_text_all()
-        text = do_format(text)
+        text1 = ed.get_text_all()
+        text = do_format(text1)
         if not text:
             msg_status(MSG + "Cannot format text")
             return
-        
-        msg_status(MSG + "Formatting entire text")
+
+        if text==text1:
+            msg_status(MSG + 'Text is already formatted')
+            return
+
+        msg_status(MSG + "Formatted entire text")
         ed.set_caret(0, 0)
         ed.set_text_all(text)
