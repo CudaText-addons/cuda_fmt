@@ -1,10 +1,12 @@
 import os
 import importlib
 import cudatext as app
+import json
 from cudatext import ed
 from . import format_proc
 
 MAX_SECTIONS = 10
+FN_CFG = os.path.join(app.app_path(app.APP_DIR_SETTINGS), 'cuda_fmt.json')
 
 class Command:
     helpers = {}
@@ -50,6 +52,27 @@ class Command:
         items = sorted(list(self.helpers.keys()))
         if items:
             print('Formatters: ' + ', '.join(items))
+
+        self.load_labels()
+
+
+    def load_labels(self):
+
+        if not os.path.isfile(FN_CFG):
+            return
+
+        for helper in self.helpers_plain:
+            helper['label'] = None
+
+        with open(FN_CFG, 'r', encoding='utf8') as f:
+            data = json.load(f)
+            for key in data:
+                val = data[key]
+                for helper in self.helpers_plain:
+                    if helper['caption'] == key:
+                        helper['label'] = val
+                        #print(helper)
+                        continue
 
 
     def get_func(self, lexer):
