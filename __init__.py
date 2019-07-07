@@ -15,6 +15,7 @@ class Command:
         dir = app.app_path(app.APP_DIR_PY)
         dirs = os.listdir(dir)
         dirs = [os.path.join(dir, s) for s in dirs if s.startswith('cuda_fmt_')]
+
         for dir in dirs:
             fn_inf = os.path.join(dir, 'install.inf')
             s_module = app.ini_read(fn_inf, 'info', 'subdir', '')
@@ -27,6 +28,7 @@ class Command:
                 s_caption = app.ini_read(fn_inf, section, 'caption', '')
                 if not s_caption: continue
                 s_config = app.ini_read(fn_inf, section, 'config', '')
+                force_all = app.ini_read(fn_inf, section, 'force_all', '')=='1'
 
                 helper = {
                         'module': s_module,
@@ -34,6 +36,7 @@ class Command:
                         'lexers': s_lexers,
                         'caption': s_caption,
                         'config': s_config,
+                        'force_all': force_all,
                         }
 
                 self.helpers_plain.append(helper)
@@ -64,10 +67,11 @@ class Command:
         module = item['module']
         method = item['method']
         caption = item['caption']
+        force_all = item['force_all']
 
         _m = importlib.import_module(module)
         func = getattr(_m, method)
-        return (func, caption)
+        return (func, caption, force_all)
 
 
     def format(self):
@@ -85,8 +89,8 @@ class Command:
         if res==False:
             return
 
-        func, caption = res
-        format_proc.run(func, '['+caption+'] ')
+        func, caption, force_all = res
+        format_proc.run(func, '['+caption+'] ', force_all)
 
 
     def config(self, is_global):

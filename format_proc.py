@@ -52,12 +52,17 @@ def config_local(INI):
             msg_box('Cannot copy global config file "%s" to local folder' % INI, MB_OK)
 
 
-def run(do_format, msg):
+def run(do_format, msg, force_all):
+
     if ed.get_sel_mode() != SEL_NORMAL:
         msg_status(msg + "Column/line selections not supported")
         return
 
-    text = ed.get_text_sel()
+    if force_all:
+        text = ''
+    else:
+        text = ed.get_text_sel()
+
     if text:
         text = do_format(text)
         if not text:
