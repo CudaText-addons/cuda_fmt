@@ -4,7 +4,7 @@ import cudatext as app
 from cudatext import ed
 from . import format_proc
 
-MAX_SECTIONS = 8
+MAX_SECTIONS = 10
 
 class Command:
     helpers = {}
