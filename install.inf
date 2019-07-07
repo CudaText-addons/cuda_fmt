@@ -7,15 +7,45 @@ homepage=https://github.com/CudaText-addons/cuda_fmt
 
 [item1]
 section=commands
-caption=CudaFormatter\Format
+caption=CudaFormatter\Formatter (menu)
 method=format
 
+[item2]
+section=commands
+caption=CudaFormatter\Formatter A
+method=format_a
+
+[item3]
+section=commands
+caption=CudaFormatter\Formatter B
+method=format_b
+
+[item4]
+section=commands
+caption=CudaFormatter\Formatter C
+method=format_c
+
+[item5]
+section=commands
+caption=CudaFormatter\Formatter D
+method=format_d
+
+[item9]
+section=commands
+caption=CudaFormatter\-
+method=_
+
 [item10]
+section=commands
+caption=CudaFormatter\Configure labels...
+method=config_labels
+
+[item20]
 section=commands
 caption=CudaFormatter\Configure formatter...
 method=config_global
 
-[item11]
+[item21]
 section=commands
 caption=CudaFormatter\Configure formatter (local)...
 method=config_local

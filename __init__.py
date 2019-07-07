@@ -120,3 +120,24 @@ class Command:
     def config_local(self):
 
         self.config(False)
+
+    def config_labels(self):
+
+        pass
+
+    def format_a(self):
+
+        format_label('A')
+
+    def format_b(self):
+
+        format_label('B')
+
+    def format_c(self):
+
+        format_label('C')
+
+    def format_d(self):
+
+        format_label('D')
+
