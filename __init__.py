@@ -107,7 +107,7 @@ class Command:
 
         res = self.get_func(lexer)
         if res is None:
-            app.msg_status('No formatters for lexer "%s"'%lexer)
+            app.msg_status('No formatters for "%s"'%lexer)
             return
 
         if res==False:
@@ -156,7 +156,7 @@ class Command:
 
         helpers = self.helpers.get(lexer)
         if not helpers:
-            app.msg_status('No formatter for "%s" with label "%s"'%(lexer, label))
+            app.msg_status('No formatters for "%s"'%lexer)
             return
 
         for helper in helpers:
