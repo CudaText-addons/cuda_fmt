@@ -147,46 +147,47 @@ class Command:
 
     def config_labels(self):
 
-        caps = [item['caption']+((' -- '+item['label']) if item['label'] else '')+
-                '\t'+item['lexers'] for item in self.helpers_plain]
-        res = app.dlg_menu(app.MENU_LIST_ALT, caps, caption='Formatters labels')
-        if res is None:
-            return
+        while True:
+            caps = [item['caption']+((' -- '+item['label']) if item['label'] else '')+
+                    '\t'+item['lexers'] for item in self.helpers_plain]
+            res = app.dlg_menu(app.MENU_LIST_ALT, caps, caption='Formatters labels')
+            if res is None:
+                return
 
-        helper = self.helpers_plain[res]
-        label = helper['label'] or '_'
+            helper = self.helpers_plain[res]
+            label = helper['label'] or '_'
 
-        res = app.dlg_menu(app.MENU_LIST,
-            ['(None)', 'A', 'B', 'C', 'D'],
-            focused = '_ABCD'.find(label),
-            caption = 'Label for "%s"'%helper['caption']
-            )
-        if res is None:
-            return
-        if res==0:
-            label = None
-        else:
-            label = '_ABCD'[res]
-
-        helper['label'] = label
-
-        data = {}
-        if os.path.isfile(FN_CFG):
-            with open(FN_CFG, 'r', encoding='utf8') as f:
-                data = json.load(f)
-
-        if 'labels' in data:
-            if label:
-                data['labels'][helper['caption']] = label
+            res = app.dlg_menu(app.MENU_LIST,
+                ['(None)', 'A', 'B', 'C', 'D'],
+                focused = '_ABCD'.find(label),
+                caption = 'Label for "%s"'%helper['caption']
+                )
+            if res is None:
+                continue
+            if res==0:
+                label = None
             else:
-                del data['labels'][helper['caption']]
-        else:
-            if label:
-                data = {'labels': {helper['caption']: label}}
+                label = '_ABCD'[res]
 
-        with open(FN_CFG, 'w', encoding='utf8') as f:
-            s = json.dumps(data, indent=2)
-            f.write(s)
+            helper['label'] = label
+
+            data = {}
+            if os.path.isfile(FN_CFG):
+                with open(FN_CFG, 'r', encoding='utf8') as f:
+                    data = json.load(f)
+
+            if 'labels' in data:
+                if label:
+                    data['labels'][helper['caption']] = label
+                else:
+                    del data['labels'][helper['caption']]
+            else:
+                if label:
+                    data = {'labels': {helper['caption']: label}}
+
+            with open(FN_CFG, 'w', encoding='utf8') as f:
+                s = json.dumps(data, indent=2)
+                f.write(s)
 
 
     def format_label(self, label):
