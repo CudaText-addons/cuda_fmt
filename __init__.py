@@ -33,15 +33,13 @@ class Command:
                     if s_lex not in self.helpers:
                         self.helpers[s_lex] = []
                     self.helpers[s_lex] = self.helpers[s_lex] + [helper]
-                        
-                #print('module', s_module, 'lexers', s_lexers, 'method', s_method)
 
         items = sorted(list(self.helpers.keys()))
         if items:
             print('Formatters: ' + ', '.join(items))
 
 
-    def get_method(self, lexer):
+    def get_func(self, lexer):
 
         d = self.helpers.get(lexer)
         if not d: return
@@ -56,8 +54,10 @@ class Command:
             
         module = item['module']
         method = item['method']
+        caption = item['caption']
         _m = importlib.import_module(module)
-        return getattr(_m, method)
+        func = getattr(_m, method)
+        return (func, caption)
 
 
     def format(self):
@@ -67,10 +67,11 @@ class Command:
             app.msg_status('No formatters for None-lexer')
             return
 
-        method = self.get_method(lexer)
-        if not method:
+        res = self.get_func(lexer)
+        if not res:
             app.msg_status('No formatters for lexer "%s"'%lexer)
             return
-
-        format_proc.run(method)
-        app.msg_status('Formatted')
+            
+        func, caption = res
+        format_proc.run(func)
+        app.msg_status('Formatted using "%s"'%caption)
