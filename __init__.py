@@ -39,6 +39,7 @@ class Command:
                         'caption': s_caption,
                         'config': s_config,
                         'force_all': force_all,
+                        'label': None,
                         }
 
                 self.helpers_plain.append(helper)
@@ -61,11 +62,11 @@ class Command:
         if not os.path.isfile(FN_CFG):
             return
 
-        for helper in self.helpers_plain:
-            helper['label'] = None
-
         with open(FN_CFG, 'r', encoding='utf8') as f:
             data = json.load(f)
+            data = data.get('labels')
+            if not data:
+                return
             for key in data:
                 val = data[key]
                 for helper in self.helpers_plain:
@@ -166,7 +167,26 @@ class Command:
             label = None
         else:
             label = '_ABCD'[res]
-        print(label)
+
+        helper['label'] = label
+
+        data = {}
+        if os.path.isfile(FN_CFG):
+            with open(FN_CFG, 'r', encoding='utf8') as f:
+                data = json.load(f)
+
+        if 'labels' in data:
+            data['labels'][helper['caption']] = label
+        else:
+            data = {
+                    'labels': {
+                      helper['caption']: label
+                      }
+                   }
+
+        with open(FN_CFG, 'w', encoding='utf8') as f:
+            s = json.dumps(data, indent=2)
+            f.write(s)
 
 
     def format_label(self, label):
