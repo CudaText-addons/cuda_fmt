@@ -146,7 +146,28 @@ class Command:
 
     def config_labels(self):
 
-        pass
+        caps = [item['caption']+((' -- '+item['label']) if item['label'] else '')+
+                '\t'+item['lexers'] for item in self.helpers_plain]
+        res = app.dlg_menu(app.MENU_LIST_ALT, caps, caption='Formatters labels')
+        if res is None:
+            return
+
+        helper = self.helpers_plain[res]
+        label = helper['label'] or '_'
+
+        res = app.dlg_menu(app.MENU_LIST,
+            ['(None)', 'A', 'B', 'C', 'D'],
+            focused = '_ABCD'.find(label),
+            caption = 'Label for "%s"'%helper['caption']
+            )
+        if res is None:
+            return
+        if res==0:
+            label = None
+        else:
+            label = '_ABCD'[res]
+        print(label)
+
 
     def format_label(self, label):
 
