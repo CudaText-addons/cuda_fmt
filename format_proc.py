@@ -4,7 +4,7 @@ import os
 import shutil
 
 INI = 'cuda_someformat.cfg'
-MSG = '[NNN Format] '
+MSG = 'Formatter: '
 
 def ini_global():
     ini = os.path.join(app_path(APP_DIR_SETTINGS), INI)
@@ -70,9 +70,7 @@ def run(do_format):
         msg_status(MSG + "Formatting selected text")
 
         x0, y0, x1, y1 = ed.get_carets()[0]
-        if (y1>y0) or ((y1==y0) and (x1>=x0)):
-            pass
-        else:
+        if (y0, x0)>(y1, x1):
             x0, y0, x1, y1 = x1, y1, x0, y0 
         
         ed.set_caret(x0, y0)

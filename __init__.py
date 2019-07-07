@@ -74,4 +74,3 @@ class Command:
             
         func, caption = res
         format_proc.run(func)
-        app.msg_status('Formatted using "%s"'%caption)
