@@ -176,13 +176,13 @@ class Command:
                 data = json.load(f)
 
         if 'labels' in data:
-            data['labels'][helper['caption']] = label
+            if label:
+                data['labels'][helper['caption']] = label
+            else:
+                del data['labels'][helper['caption']]
         else:
-            data = {
-                    'labels': {
-                      helper['caption']: label
-                      }
-                   }
+            if label:
+                data = {'labels': {helper['caption']: label}}
 
         with open(FN_CFG, 'w', encoding='utf8') as f:
             s = json.dumps(data, indent=2)
