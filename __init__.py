@@ -23,7 +23,9 @@ class Command:
                 if not s_method: continue
                 s_lexers = app.ini_read(fn_inf, section, 'lexers', '')
                 if not s_lexers: continue
+                s_caption = app.ini_read(fn_inf, section, 'caption', '')
                 helper = {
+                        'caption': s_caption,
                         'module': s_module,
                         'method': s_method,
                         }
@@ -47,7 +49,7 @@ class Command:
         if len(d)==1:
             item = d[0]
         else:
-            items = [item.get('method') for item in d]
+            items = [item['caption'] for item in d]
             res = app.dlg_menu(app.MENU_LIST, items, caption='Formatters for %s'%lexer)
             if res is None: return
             item = d[res]
