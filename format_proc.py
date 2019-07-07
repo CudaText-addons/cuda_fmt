@@ -3,43 +3,41 @@ import sys
 import os
 import shutil
 
-INI = 'cuda_someformat.cfg'
-
-def ini_global():
+def ini_global(INI):
     ini = os.path.join(app_path(APP_DIR_SETTINGS), INI)
     ini0 = os.path.join(os.path.dirname(__file__), INI)
     if not os.path.isfile(ini) and os.path.isfile(ini0):
         shutil.copyfile(ini0, ini)
     return ini
 
-def ini_local():
+def ini_local(INI):
     fn = ed.get_filename()
     if fn:
         return os.path.join(os.path.dirname(fn), INI)
     else:
         return ''
 
-def ini_filename():
-    ini_g = ini_global()
-    ini_l = ini_local()
+def ini_filename(INI):
+    ini_g = ini_global(INI)
+    ini_l = ini_local(INI)
     if os.path.isfile(ini_l):
         return ini_l
     else:
         return ini_g
 
-def config_global():
-    ini = ini_global()
+def config_global(INI):
+    ini = ini_global(INI)
     if os.path.isfile(ini):
         file_open(ini)
     else:
         msg_box('Global config file "%s" not found' % INI, MB_OK)
 
-def config_local():
+def config_local(INI):
     if not ed.get_filename():
         msg_box('Cannot open local config file for untitled tab', MB_OK)
         return
-    ini = ini_local()
-    ini0 = ini_global()
+    ini = ini_local(INI)
+    ini0 = ini_global(INI)
     if os.path.isfile(ini):
         file_open(ini)
         return
