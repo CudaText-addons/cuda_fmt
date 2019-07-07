@@ -43,8 +43,9 @@ class Command:
 
                 for s_lex in s_lexers.split(','):
                     if s_lex not in self.helpers:
-                        self.helpers[s_lex] = []
-                    self.helpers[s_lex] = self.helpers[s_lex] + [helper]
+                        self.helpers[s_lex] = [helper]
+                    else:
+                        self.helpers[s_lex].append(helper)
 
         items = sorted(list(self.helpers.keys()))
         if items:
