@@ -148,19 +148,43 @@ class Command:
 
         pass
 
+    def format_label(self, label):
+
+        lexer = ed.get_prop(app.PROP_LEXER_FILE)
+        if not lexer:
+            return
+
+        helpers = self.helpers.get(lexer)
+        if not helpers:
+            app.msg_status('No formatter for "%s" with label "%s"'%(lexer, label))
+            return
+
+        for helper in helpers:
+            if helper['label']==label:
+                _m = importlib.import_module(helper['module'])
+                func = getattr(_m, helper['method'])
+                format_proc.run(
+                    func,
+                    '['+helper['caption']+'] ',
+                    helper['force_all']
+                    )
+                return
+
+        app.msg_status('No formatter for "%s" with label "%s"'%(lexer, label))
+
+
     def format_a(self):
 
-        format_label('A')
+        self.format_label('A')
 
     def format_b(self):
 
-        format_label('B')
+        self.format_label('B')
 
     def format_c(self):
 
-        format_label('C')
+        self.format_label('C')
 
     def format_d(self):
 
-        format_label('D')
-
+        self.format_label('D')
