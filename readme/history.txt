@@ -1,4 +1,8 @@
 
+2019.07.09
++ add: can specify lexers via RegEx (example: formatters for JS)
+* refactored
+
 2019.07.08
 + added commands to run formatter by label A, B, C, D
 + added command to configure labels

@@ -1,4 +1,5 @@
 import os
+import re
 import importlib
 import cudatext as app
 import json
@@ -28,8 +29,9 @@ class Helpers:
         if lexer in ('', '-'):
             return
         for helper in self.helpers:
-            if ','+lexer+',' in ','+helper['lexers']+',':
-                res.append(helper)
+            for item in helper['lexers'].split(','):
+                if re.match(item, lexer):
+                    res.append(helper)
         return res
 
 
