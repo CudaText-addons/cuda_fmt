@@ -1,7 +1,6 @@
-from cudatext import *
-import sys
 import os
 import shutil
+from cudatext import *
 
 def ini_global(INI, dir):
     ini = os.path.join(app_path(APP_DIR_SETTINGS), INI)
