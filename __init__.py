@@ -6,10 +6,10 @@ from .fmtconfig import *
 from .fmtrun import *
 from cudatext import ed
 
-MAX_SECTIONS = 10
 FN_CFG = os.path.join(app.app_path(app.APP_DIR_SETTINGS), 'cuda_fmt.json')
 
 class Helpers:
+    MAX_SECTIONS = 10
     helpers = []
 
     def lexers(self):
@@ -41,7 +41,7 @@ class Helpers:
         for dir in dirs:
             fn_inf = os.path.join(dir, 'install.inf')
             s_module = app.ini_read(fn_inf, 'info', 'subdir', '')
-            for index in range(1, MAX_SECTIONS+1):
+            for index in range(1, self.MAX_SECTIONS+1):
                 section = 'fmt'+str(index)
                 s_method = app.ini_read(fn_inf, section, 'method', '')
                 if not s_method: continue
@@ -64,6 +64,29 @@ class Helpers:
                         }
 
                 self.helpers.append(helper)
+
+
+    def get_props(self, lexer):
+
+        d = self.helpers_for_lexer(lexer)
+        if not d: return
+
+        if len(d)==1:
+            item = d[0]
+        else:
+            items = [item['caption'] for item in d]
+            res = app.dlg_menu(app.MENU_LIST, items, caption='Formatters for %s'%lexer)
+            if res is None: return False
+            item = d[res]
+
+        module = item['module']
+        method = item['method']
+        caption = item['caption']
+        force_all = item['force_all']
+
+        _m = importlib.import_module(module)
+        func = getattr(_m, method)
+        return (func, caption, force_all)
 
 
 helpers = Helpers()
@@ -106,29 +129,6 @@ class Command:
                         continue
 
 
-    def get_func(self, lexer):
-
-        d = helpers.helpers_for_lexer(lexer)
-        if not d: return
-
-        if len(d)==1:
-            item = d[0]
-        else:
-            items = [item['caption'] for item in d]
-            res = app.dlg_menu(app.MENU_LIST, items, caption='Formatters for %s'%lexer)
-            if res is None: return False
-            item = d[res]
-
-        module = item['module']
-        method = item['method']
-        caption = item['caption']
-        force_all = item['force_all']
-
-        _m = importlib.import_module(module)
-        func = getattr(_m, method)
-        return (func, caption, force_all)
-
-
     def format(self):
 
         lexer = ed.get_prop(app.PROP_LEXER_FILE)
@@ -136,7 +136,7 @@ class Command:
             app.msg_status('No formatters for None-lexer')
             return
 
-        res = self.get_func(lexer)
+        res = helpers.get_props(lexer)
         if res is None:
             app.msg_status('No formatters for "%s"'%lexer)
             return
