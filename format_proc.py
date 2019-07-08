@@ -17,7 +17,7 @@ def ini_local(INI):
     else:
         return ''
 
-def ini_filename(INI, dir):
+def current_filename(INI, dir):
     ini_g = ini_global(INI, dir)
     ini_l = ini_local(INI)
     if os.path.isfile(ini_l):

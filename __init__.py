@@ -15,7 +15,7 @@ def get_config_filename(caption):
 
     for helper in helpers_plain:
         if helper['caption']==caption and helper['config']:
-            return format_proc.ini_filename(helper['config'], helper['dir'])
+            return format_proc.current_filename(helper['config'], helper['dir'])
 
 
 class Command:
