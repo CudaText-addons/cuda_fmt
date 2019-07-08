@@ -9,12 +9,12 @@ from cudatext import ed
 MAX_SECTIONS = 10
 FN_CFG = os.path.join(app.app_path(app.APP_DIR_SETTINGS), 'cuda_fmt.json')
 
-helpers_plain = []
+helpers = []
 
 def get_helpers_lexers():
 
     r = ''
-    for helper in helpers_plain:
+    for helper in helpers:
         r += helper['lexers']+','
     r = sorted(list(set(r.split(','))))
     r.remove('')
@@ -26,7 +26,7 @@ def get_helpers_for_lexer(lexer):
     res = []
     if lexer in ('', '-'):
         return
-    for helper in helpers_plain:
+    for helper in helpers:
         if ','+lexer+',' in ','+helper['lexers']+',':
             res.append(helper)
     return res
@@ -34,7 +34,7 @@ def get_helpers_for_lexer(lexer):
 
 def get_config_filename(caption):
 
-    for helper in helpers_plain:
+    for helper in helpers:
         if helper['caption']==caption and helper['config']:
             cfg = FmtConfig(helper['config'], helper['dir'])
             return cfg.current_filename()
@@ -73,7 +73,7 @@ class Command:
                         'label': None,
                         }
 
-                helpers_plain.append(helper)
+                helpers.append(helper)
 
         items = get_helpers_lexers()
         if items:
@@ -94,7 +94,7 @@ class Command:
                 return
             for key in data:
                 val = data[key]
-                for helper in helpers_plain:
+                for helper in helpers:
                     if helper['caption'] == key:
                         helper['label'] = val
                         #print(helper)
@@ -145,7 +145,7 @@ class Command:
 
     def config(self, is_global):
 
-        items = [item for item in helpers_plain if item['config']]
+        items = [item for item in helpers if item['config']]
         if not items:
             app.msg_status('No configurable formatters')
             return
@@ -174,12 +174,12 @@ class Command:
 
         while True:
             caps = [item['caption']+((' -- '+item['label']) if item['label'] else '')+
-                    '\t'+item['lexers'] for item in helpers_plain]
+                    '\t'+item['lexers'] for item in helpers]
             res = app.dlg_menu(app.MENU_LIST_ALT, caps, caption='Formatters labels')
             if res is None:
                 return
 
-            helper = helpers_plain[res]
+            helper = helpers[res]
             label = helper['label'] or '_'
 
             res = app.dlg_menu(app.MENU_LIST,
