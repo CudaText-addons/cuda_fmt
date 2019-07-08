@@ -8,7 +8,7 @@ from . import format_proc
 MAX_SECTIONS = 10
 FN_CFG = os.path.join(app.app_path(app.APP_DIR_SETTINGS), 'cuda_fmt.json')
 
-helpers = {}
+helpers_lex = {}
 helpers_plain = []
 
 def get_config_filename(caption):
@@ -54,12 +54,12 @@ class Command:
                 helpers_plain.append(helper)
 
                 for s_lex in s_lexers.split(','):
-                    if s_lex not in helpers:
-                        helpers[s_lex] = [helper]
+                    if s_lex not in helpers_lex:
+                        helpers_lex[s_lex] = [helper]
                     else:
-                        helpers[s_lex].append(helper)
+                        helpers_lex[s_lex].append(helper)
 
-        items = sorted(list(helpers.keys()))
+        items = sorted(list(helpers_lex.keys()))
         if items:
             print('Formatters: ' + ', '.join(items))
 
@@ -87,7 +87,7 @@ class Command:
 
     def get_func(self, lexer):
 
-        d = helpers.get(lexer)
+        d = helpers_lex.get(lexer)
         if not d: return
 
         if len(d)==1:
@@ -207,12 +207,12 @@ class Command:
         if not lexer:
             return
 
-        helpers = helpers.get(lexer)
-        if not helpers:
+        items = helpers_lex.get(lexer)
+        if not items:
             app.msg_status('No formatters for "%s"'%lexer)
             return
 
-        for helper in helpers:
+        for helper in items:
             if helper['label']==label:
                 _m = importlib.import_module(helper['module'])
                 func = getattr(_m, helper['method'])
