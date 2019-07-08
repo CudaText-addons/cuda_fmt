@@ -9,42 +9,32 @@ from cudatext import ed
 MAX_SECTIONS = 10
 FN_CFG = os.path.join(app.app_path(app.APP_DIR_SETTINGS), 'cuda_fmt.json')
 
-helpers = []
+class Helpers:
+    helpers = []
 
-def get_helpers_lexers():
+    def lexers(self):
 
-    r = ''
-    for helper in helpers:
-        r += helper['lexers']+','
-    r = sorted(list(set(r.split(','))))
-    r.remove('')
-    return r
-
-
-def get_helpers_for_lexer(lexer):
-
-    res = []
-    if lexer in ('', '-'):
-        return
-    for helper in helpers:
-        if ','+lexer+',' in ','+helper['lexers']+',':
-            res.append(helper)
-    return res
+        r = ''
+        for helper in self.helpers:
+            r += helper['lexers']+','
+        r = sorted(list(set(r.split(','))))
+        r.remove('')
+        return r
 
 
-def get_config_filename(caption):
+    def helpers_for_lexer(self, lexer):
 
-    for helper in helpers:
-        if helper['caption']==caption and helper['config']:
-            cfg = FmtConfig(helper['config'], helper['dir'])
-            return cfg.current_filename()
+        res = []
+        if lexer in ('', '-'):
+            return
+        for helper in self.helpers:
+            if ','+lexer+',' in ','+helper['lexers']+',':
+                res.append(helper)
+        return res
 
 
-class Command:
+    def load_dir(self, dir):
 
-    def __init__(self):
-
-        dir = app.app_path(app.APP_DIR_PY)
         dirs = os.listdir(dir)
         dirs = [os.path.join(dir, s) for s in dirs if s.startswith('cuda_fmt_')]
 
@@ -73,11 +63,26 @@ class Command:
                         'label': None,
                         }
 
-                helpers.append(helper)
+                self.helpers.append(helper)
 
-        items = get_helpers_lexers()
-        if items:
-            print('Formatters: ' + ', '.join(items))
+
+helpers = Helpers()
+helpers.load_dir(app.app_path(app.APP_DIR_PY))
+print('Formatters: ' + ', '.join(helpers.lexers()))
+
+
+def get_config_filename(caption):
+
+    for helper in helpers.helpers:
+        if helper['caption']==caption and helper['config']:
+            cfg = FmtConfig(helper['config'], helper['dir'])
+            return cfg.current_filename()
+
+
+
+class Command:
+
+    def __init__(self):
 
         self.load_labels()
 
@@ -94,7 +99,7 @@ class Command:
                 return
             for key in data:
                 val = data[key]
-                for helper in helpers:
+                for helper in helpers.helpers:
                     if helper['caption'] == key:
                         helper['label'] = val
                         #print(helper)
@@ -103,7 +108,7 @@ class Command:
 
     def get_func(self, lexer):
 
-        d = get_helpers_for_lexer(lexer)
+        d = helpers.helpers_for_lexer(lexer)
         if not d: return
 
         if len(d)==1:
@@ -145,7 +150,7 @@ class Command:
 
     def config(self, is_global):
 
-        items = [item for item in helpers if item['config']]
+        items = [item for item in helpers.helpers if item['config']]
         if not items:
             app.msg_status('No configurable formatters')
             return
@@ -174,12 +179,12 @@ class Command:
 
         while True:
             caps = [item['caption']+((' -- '+item['label']) if item['label'] else '')+
-                    '\t'+item['lexers'] for item in helpers]
+                    '\t'+item['lexers'] for item in helpers.helpers]
             res = app.dlg_menu(app.MENU_LIST_ALT, caps, caption='Formatters labels')
             if res is None:
                 return
 
-            helper = helpers[res]
+            helper = helpers.helpers[res]
             label = helper['label'] or '_'
 
             res = app.dlg_menu(app.MENU_LIST,
@@ -221,7 +226,7 @@ class Command:
         if not lexer:
             return
 
-        items = get_helpers_for_lexer(lexer)
+        items = helpers.helpers_for_lexer(lexer)
         if not items:
             app.msg_status('No formatters for "%s"'%lexer)
             return
