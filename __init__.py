@@ -2,8 +2,9 @@ import os
 import importlib
 import cudatext as app
 import json
+from .fmtconfig import *
+from .fmtrun import *
 from cudatext import ed
-from . import fmtproc
 
 MAX_SECTIONS = 10
 FN_CFG = os.path.join(app.app_path(app.APP_DIR_SETTINGS), 'cuda_fmt.json')
@@ -15,7 +16,8 @@ def get_config_filename(caption):
 
     for helper in helpers_plain:
         if helper['caption']==caption and helper['config']:
-            return fmtproc.current_filename(helper['config'], helper['dir'])
+            cfg = FmtConfig(helper['config'], helper['dir'])
+            return cfg.current_filename()
 
 
 class Command:
@@ -124,7 +126,7 @@ class Command:
             return
 
         func, caption, force_all = res
-        fmtproc.format(func, '['+caption+'] ', force_all)
+        run_format(func, '['+caption+'] ', force_all)
 
 
     def config(self, is_global):
@@ -140,13 +142,11 @@ class Command:
         if res is None: return
         item = items[res]
 
-        ini = item['config']
-        dir = item['dir']
-
+        cfg = FmtConfig(item['config'], item['dir'])
         if is_global:
-            fmtproc.config_global(ini, dir)
+            cfg.config_global()
         else:
-            fmtproc.config_local(ini, dir)
+            cfg.config_local()
 
     def config_global(self):
 
@@ -216,7 +216,7 @@ class Command:
             if helper['label']==label:
                 _m = importlib.import_module(helper['module'])
                 func = getattr(_m, helper['method'])
-                fmtproc.format(
+                run_format(
                     func,
                     '['+helper['caption']+'] ',
                     helper['force_all']
