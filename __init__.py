@@ -124,7 +124,7 @@ class Command:
             return
 
         func, caption, force_all = res
-        fmtproc.run(func, '['+caption+'] ', force_all)
+        fmtproc.format(func, '['+caption+'] ', force_all)
 
 
     def config(self, is_global):
@@ -216,7 +216,7 @@ class Command:
             if helper['label']==label:
                 _m = importlib.import_module(helper['module'])
                 func = getattr(_m, helper['method'])
-                fmtproc.run(
+                fmtproc.format(
                     func,
                     '['+helper['caption']+'] ',
                     helper['force_all']
