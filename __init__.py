@@ -9,8 +9,28 @@ from cudatext import ed
 MAX_SECTIONS = 10
 FN_CFG = os.path.join(app.app_path(app.APP_DIR_SETTINGS), 'cuda_fmt.json')
 
-helpers_lex = {}
 helpers_plain = []
+
+def get_helpers_lexers():
+
+    r = ''
+    for helper in helpers_plain:
+        r += helper['lexers']+','
+    r = sorted(list(set(r.split(','))))
+    r.remove('')
+    return r
+
+
+def get_helpers_for_lexer(lexer):
+
+    res = []
+    if lexer in ('', '-'):
+        return
+    for helper in helpers_plain:
+        if ','+lexer+',' in ','+helper['lexers']+',':
+            res.append(helper)
+    return res
+
 
 def get_config_filename(caption):
 
@@ -55,13 +75,7 @@ class Command:
 
                 helpers_plain.append(helper)
 
-                for s_lex in s_lexers.split(','):
-                    if s_lex not in helpers_lex:
-                        helpers_lex[s_lex] = [helper]
-                    else:
-                        helpers_lex[s_lex].append(helper)
-
-        items = sorted(list(helpers_lex.keys()))
+        items = get_helpers_lexers()
         if items:
             print('Formatters: ' + ', '.join(items))
 
@@ -89,7 +103,7 @@ class Command:
 
     def get_func(self, lexer):
 
-        d = helpers_lex.get(lexer)
+        d = get_helpers_for_lexer(lexer)
         if not d: return
 
         if len(d)==1:
@@ -207,7 +221,7 @@ class Command:
         if not lexer:
             return
 
-        items = helpers_lex.get(lexer)
+        items = get_helpers_for_lexer(lexer)
         if not items:
             app.msg_status('No formatters for "%s"'%lexer)
             return
