@@ -3,9 +3,9 @@ import sys
 import os
 import shutil
 
-def ini_global(INI):
+def ini_global(INI, dir):
     ini = os.path.join(app_path(APP_DIR_SETTINGS), INI)
-    ini0 = os.path.join(os.path.dirname(__file__), INI)
+    ini0 = os.path.join(dir, INI)
     if not os.path.isfile(ini) and os.path.isfile(ini0):
         shutil.copyfile(ini0, ini)
     return ini
@@ -17,27 +17,27 @@ def ini_local(INI):
     else:
         return ''
 
-def ini_filename(INI):
-    ini_g = ini_global(INI)
+def ini_filename(INI, dir):
+    ini_g = ini_global(INI, dir)
     ini_l = ini_local(INI)
     if os.path.isfile(ini_l):
         return ini_l
     else:
         return ini_g
 
-def config_global(INI):
-    ini = ini_global(INI)
+def config_global(INI, dir):
+    ini = ini_global(INI, dir)
     if os.path.isfile(ini):
         file_open(ini)
     else:
         msg_box('Global config file "%s" not found' % INI, MB_OK)
 
-def config_local(INI):
+def config_local(INI, dir):
     if not ed.get_filename():
         msg_box('Cannot open local config file for untitled tab', MB_OK)
         return
     ini = ini_local(INI)
-    ini0 = ini_global(INI)
+    ini0 = ini_global(INI, dir)
     if os.path.isfile(ini):
         file_open(ini)
         return

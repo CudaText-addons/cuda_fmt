@@ -8,9 +8,17 @@ from . import format_proc
 MAX_SECTIONS = 10
 FN_CFG = os.path.join(app.app_path(app.APP_DIR_SETTINGS), 'cuda_fmt.json')
 
+helpers = {}
+helpers_plain = []
+
+def get_config_filename(caption):
+
+    for helper in helpers_plain:
+        if helper['caption']==caption and helper['config']:
+            return format_proc.ini_filename(helper['config'], helper['dir'])
+
+
 class Command:
-    helpers = {}
-    helpers_plain = []
 
     def __init__(self):
 
@@ -33,6 +41,7 @@ class Command:
                 force_all = app.ini_read(fn_inf, section, 'force_all', '')=='1'
 
                 helper = {
+                        'dir': dir,
                         'module': s_module,
                         'method': s_method,
                         'lexers': s_lexers,
@@ -42,15 +51,15 @@ class Command:
                         'label': None,
                         }
 
-                self.helpers_plain.append(helper)
+                helpers_plain.append(helper)
 
                 for s_lex in s_lexers.split(','):
-                    if s_lex not in self.helpers:
-                        self.helpers[s_lex] = [helper]
+                    if s_lex not in helpers:
+                        helpers[s_lex] = [helper]
                     else:
-                        self.helpers[s_lex].append(helper)
+                        helpers[s_lex].append(helper)
 
-        items = sorted(list(self.helpers.keys()))
+        items = sorted(list(helpers.keys()))
         if items:
             print('Formatters: ' + ', '.join(items))
 
@@ -69,7 +78,7 @@ class Command:
                 return
             for key in data:
                 val = data[key]
-                for helper in self.helpers_plain:
+                for helper in helpers_plain:
                     if helper['caption'] == key:
                         helper['label'] = val
                         #print(helper)
@@ -78,7 +87,7 @@ class Command:
 
     def get_func(self, lexer):
 
-        d = self.helpers.get(lexer)
+        d = helpers.get(lexer)
         if not d: return
 
         if len(d)==1:
@@ -120,7 +129,7 @@ class Command:
 
     def config(self, is_global):
 
-        items = [item for item in self.helpers_plain if item['config']]
+        items = [item for item in helpers_plain if item['config']]
         if not items:
             app.msg_status('No configurable formatters')
             return
@@ -132,10 +141,12 @@ class Command:
         item = items[res]
 
         ini = item['config']
+        dir = item['dir']
+
         if is_global:
-            format_proc.config_global(ini)
+            format_proc.config_global(ini, dir)
         else:
-            format_proc.config_local(ini)
+            format_proc.config_local(ini, dir)
 
     def config_global(self):
 
@@ -149,12 +160,12 @@ class Command:
 
         while True:
             caps = [item['caption']+((' -- '+item['label']) if item['label'] else '')+
-                    '\t'+item['lexers'] for item in self.helpers_plain]
+                    '\t'+item['lexers'] for item in helpers_plain]
             res = app.dlg_menu(app.MENU_LIST_ALT, caps, caption='Formatters labels')
             if res is None:
                 return
 
-            helper = self.helpers_plain[res]
+            helper = helpers_plain[res]
             label = helper['label'] or '_'
 
             res = app.dlg_menu(app.MENU_LIST,
@@ -196,7 +207,7 @@ class Command:
         if not lexer:
             return
 
-        helpers = self.helpers.get(lexer)
+        helpers = helpers.get(lexer)
         if not helpers:
             app.msg_status('No formatters for "%s"'%lexer)
             return
