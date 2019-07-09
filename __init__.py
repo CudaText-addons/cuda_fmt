@@ -1,11 +1,11 @@
 import os
 import re
+import json
 import importlib
 import cudatext as app
-import json
+from cudatext import ed
 from .fmtconfig import *
 from .fmtrun import *
-from cudatext import ed
 
 FN_CFG = os.path.join(app.app_path(app.APP_DIR_SETTINGS), 'cuda_fmt.json')
 
