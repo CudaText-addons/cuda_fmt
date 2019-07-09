@@ -10,7 +10,6 @@ from .fmtrun import *
 FN_CFG = os.path.join(app.app_path(app.APP_DIR_SETTINGS), 'cuda_fmt.json')
 
 class Helpers:
-    MAX_SECTIONS = 10
     helpers = []
 
     def lexers(self):
@@ -47,14 +46,14 @@ class Helpers:
         for dir in dirs:
             fn_inf = os.path.join(dir, 'install.inf')
             s_module = app.ini_read(fn_inf, 'info', 'subdir', '')
-            for index in range(1, self.MAX_SECTIONS+1):
+            for index in range(1, 100):
                 section = 'fmt'+str(index)
                 s_method = app.ini_read(fn_inf, section, 'method', '')
-                if not s_method: continue
+                if not s_method: break
                 s_lexers = app.ini_read(fn_inf, section, 'lexers', '')
-                if not s_lexers: continue
+                if not s_lexers: break
                 s_caption = app.ini_read(fn_inf, section, 'caption', '')
-                if not s_caption: continue
+                if not s_caption: break
                 s_config = app.ini_read(fn_inf, section, 'config', '')
                 force_all = app.ini_read(fn_inf, section, 'force_all', '')=='1'
 
