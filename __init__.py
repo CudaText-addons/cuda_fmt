@@ -30,7 +30,11 @@ class Helpers:
             return
         for helper in self.helpers:
             for item in helper['lexers'].split(','):
-                if re.match(item, lexer):
+                if item.startswith('regex:'):
+                    ok = re.match(item[6:], lexer)
+                else:
+                    ok = item==lexer
+                if ok:
                     res.append(helper)
         return res
 
