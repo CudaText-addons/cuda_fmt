@@ -160,9 +160,9 @@ class Command:
             app.msg_status('No configurable formatters')
             return
 
-        caps = ['%s (%s)\t%s'%(item['caption'], item['config'], item['lexers']) for item in items]
+        caps = ['%s\t%s'%(item['caption'], item['lexers']) for item in items]
 
-        res = app.dlg_menu(app.MENU_LIST_ALT, caps, caption='Formatters')
+        res = app.dlg_menu(app.MENU_LIST, caps, caption='Formatters')
         if res is None: return
         item = items[res]
 
