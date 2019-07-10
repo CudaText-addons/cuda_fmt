@@ -185,7 +185,7 @@ class Command:
         while True:
             caps = [item['caption']+((' -- '+item['label']) if item['label'] else '')+
                     '\t'+item['lexers'] for item in helpers.helpers]
-            res = app.dlg_menu(app.MENU_LIST_ALT, caps, caption='Formatters labels')
+            res = app.dlg_menu(app.MENU_LIST, caps, caption='Formatters labels')
             if res is None:
                 return
 
