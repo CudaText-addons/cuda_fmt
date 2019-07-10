@@ -42,6 +42,7 @@ class Helpers:
 
         dirs = os.listdir(dir)
         dirs = [os.path.join(dir, s) for s in dirs if s.startswith('cuda_fmt_')]
+        dirs = sorted(dirs)
 
         for dir in dirs:
             fn_inf = os.path.join(dir, 'install.inf')
