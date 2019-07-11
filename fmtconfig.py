@@ -6,9 +6,10 @@ class FmtConfig:
     def __init__(self, fn, dir):
         self.fn = fn
         self.dir = dir
+        self.ini_dir = app_path(APP_DIR_SETTINGS)
     
     def ini_global(self):
-        ini = os.path.join(app_path(APP_DIR_SETTINGS), self.fn)
+        ini = os.path.join(self.ini_dir, self.fn)
         ini0 = os.path.join(self.dir, self.fn)
         if not os.path.isfile(ini) and os.path.isfile(ini0):
             shutil.copyfile(ini0, ini)
