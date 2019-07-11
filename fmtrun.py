@@ -12,12 +12,17 @@ def run_format(do_format, msg, force_all):
         text = ed.get_text_sel()
 
     if text:
+        with_eol = text.endswith('\n')
+        if with_eol:
+            text = text.rstrip('\n')
+
         text = do_format(text)
         if not text:
             msg_status(msg + "Cannot format text")
             return
 
-        msg_status(msg + "Formatted selection")
+        if with_eol:
+            text += '\n'
 
         x0, y0, x1, y1 = ed.get_carets()[0]
         if (y0, x0)>(y1, x1):
@@ -26,6 +31,9 @@ def run_format(do_format, msg, force_all):
         ed.set_caret(x0, y0)
         ed.delete(x0, y0, x1, y1)
         ed.insert(x0, y0, text)
+
+        msg_status(msg + "Formatted selection")
+
     else:
         text1 = ed.get_text_all()
         text = do_format(text1)
