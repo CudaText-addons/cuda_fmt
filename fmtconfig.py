@@ -6,14 +6,12 @@ class FmtConfig:
     def __init__(self, fn, dir):
         self.fn = fn
         self.dir = dir
-        self.ini_dir = app_path(APP_DIR_SETTINGS)
-    
-    def ini_global(self):
-        ini = os.path.join(self.ini_dir, self.fn)
-        ini0 = os.path.join(self.dir, self.fn)
+
+        ini = os.path.join(app_path(APP_DIR_SETTINGS), fn)
+        ini0 = os.path.join(self.dir, fn)
         if not os.path.isfile(ini) and os.path.isfile(ini0):
             shutil.copyfile(ini0, ini)
-        return ini
+        self.ini_global = ini
 
     def ini_local(self):
         fn = ed.get_filename()
@@ -23,17 +21,15 @@ class FmtConfig:
             return ''
 
     def current_filename(self):
-        ini_g = self.ini_global()
-        ini_l = self.ini_local()
-        if os.path.isfile(ini_l):
-            return ini_l
+        ini = self.ini_local()
+        if os.path.isfile(ini):
+            return ini
         else:
-            return ini_g
+            return self.ini_global
 
     def config_global(self):
-        ini = self.ini_global()
-        if os.path.isfile(ini):
-            file_open(ini)
+        if os.path.isfile(self.ini_global):
+            file_open(self.ini_global)
         else:
             msg_box('Global config file "%s" not found' % self.fn, MB_OK)
 
@@ -42,7 +38,7 @@ class FmtConfig:
             msg_box('Cannot open local config file for untitled tab', MB_OK)
             return
         ini = self.ini_local()
-        ini0 = self.ini_global()
+        ini0 = self.ini_global
         if os.path.isfile(ini):
             file_open(ini)
             return
@@ -55,4 +51,3 @@ class FmtConfig:
                 file_open(ini)
             else:
                 msg_box('Cannot copy global config file "%s" to local folder' % self.fn, MB_OK)
-
