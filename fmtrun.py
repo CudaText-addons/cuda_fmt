@@ -24,13 +24,15 @@ def run_format(do_format, msg, force_all):
             if (y0, x0)>(y1, x1):
                 x0, y0, x1, y1 = x1, y1, x0, y0
 
-            text = ed.get_text_substr(x0, y0, x1, y1)
-            with_eol = text.endswith('\n')
+            text1 = ed.get_text_substr(x0, y0, x1, y1)
+            with_eol = text1.endswith('\n')
             if with_eol:
-                text = text.rstrip('\n')
+                text1 = text1.rstrip('\n')
 
-            text = do_format(text)
+            text = do_format(text1)
             if not text:
+                continue
+            if text==text1:
                 continue
 
             if with_eol:

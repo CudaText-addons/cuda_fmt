@@ -2,6 +2,7 @@
 2019.07.11
 + add: support multi-selections
 + add: specially handle EOL at end of selected text, gives better result with Markdown Table Format
++ add: check if selection is already formatted
 
 2019.07.09
 + add: can specify lexers via RegEx (example: formatters for JS)
