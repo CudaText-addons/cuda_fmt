@@ -29,8 +29,7 @@ def run_format(do_format, msg, force_all):
             x0, y0, x1, y1 = x1, y1, x0, y0
 
         ed.set_caret(x0, y0)
-        ed.delete(x0, y0, x1, y1)
-        ed.insert(x0, y0, text)
+        ed.replace(x0, y0, x1, y1, text)
 
         msg_status(msg + "Formatted selection")
 
