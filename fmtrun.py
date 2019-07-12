@@ -50,8 +50,11 @@ def run_format(do_format, msg, force_all):
             msg_status(msg + "Cannot format selection(s)")
 
     else:
+        # format entire file
+        x0, y0, x1, y1 = ed.get_carets()[0]
         text1 = ed.get_text_all()
         text = do_format(text1)
+
         if not text:
             msg_status(msg + "Cannot format text")
             return
@@ -60,6 +63,12 @@ def run_format(do_format, msg, force_all):
             msg_status(msg + 'Text is already formatted')
             return
 
-        ed.set_caret(0, 0)
         ed.set_text_all(text)
         msg_status(msg + "Formatted entire text")
+
+        # restore caret pos
+        cnt = ed.get_line_count()
+        if y0 < cnt and y1 < cnt:
+            ed.set_caret(x0, y0, x1, y1)
+        else:
+            ed.set_caret(0, min(y0, y1))
