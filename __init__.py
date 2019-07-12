@@ -62,6 +62,7 @@ class Helpers:
                         'dir': dir,
                         'module': s_module,
                         'method': s_method,
+                        'func': None,
                         'lexers': s_lexers,
                         'caption': s_caption,
                         'config': s_config,
@@ -75,13 +76,15 @@ class Helpers:
 
     def get_item_props(self, helper):
 
-        module = helper['module']
-        method = helper['method']
+        func = helper['func']
         caption = helper['caption']
         force_all = helper['force_all']
 
-        _m = importlib.import_module(module)
-        func = getattr(_m, method)
+        if func is None:
+            _m = importlib.import_module(helper['module'])
+            func = getattr(_m, helper['method'])
+            helper['func'] = func
+
         return (func, caption, force_all)
 
 
