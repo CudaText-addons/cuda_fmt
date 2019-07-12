@@ -310,12 +310,11 @@ class Command:
 
         for helper in items:
             if helper['label']==label:
-                _m = importlib.import_module(helper['module'])
-                func = getattr(_m, helper['method'])
+                func, caption, force_all = helpers.get_item_props(helper)
                 run_format(
                     func,
-                    '['+helper['caption']+'] ',
-                    helper['force_all']
+                    '['+caption+'] ',
+                    force_all
                     )
                 return
 
