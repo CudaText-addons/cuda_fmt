@@ -177,7 +177,7 @@ class Command:
             return
 
         func, caption, force_all = res
-        run_format(func, '['+caption+'] ', force_all)
+        run_format(ed, func, '['+caption+'] ', force_all)
 
 
     def on_save_pre(self, ed_self):
@@ -191,7 +191,7 @@ class Command:
             return
 
         func, caption, _ = res
-        run_format(func, '['+caption+'] ', True)
+        run_format(ed_self, func, '['+caption+'] ', True)
 
 
     def config(self, is_global):
@@ -312,6 +312,7 @@ class Command:
             if helper['label']==label:
                 func, caption, force_all = helpers.get_item_props(helper)
                 run_format(
+                    ed,
                     func,
                     '['+caption+'] ',
                     force_all

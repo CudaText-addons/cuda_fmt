@@ -8,7 +8,7 @@ def is_selected(carets):
     return False
 
 
-def run_format(do_format, msg, force_all):
+def run_format(ed, do_format, msg, force_all):
 
     if ed.get_sel_mode() != SEL_NORMAL:
         msg_status(msg + "Column selection is not supported")
