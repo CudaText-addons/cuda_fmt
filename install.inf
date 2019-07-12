@@ -41,6 +41,12 @@ caption=CudaFormatter\Configure labels...
 method=config_labels
 menu=op
 
+[item11]
+section=commands
+caption=CudaFormatter\Configure on_save...
+method=config_label_save
+menu=op
+
 [item20]
 section=commands
 caption=CudaFormatter\Configure formatter...

@@ -67,6 +67,7 @@ class Helpers:
                         'config': s_config,
                         'force_all': force_all,
                         'label': None,
+                        'on_save': False,
                         }
 
                 self.helpers.append(helper)
@@ -122,17 +123,27 @@ class Command:
             return
 
         with open(FN_CFG, 'r', encoding='utf8') as f:
-            data = json.load(f)
-            data = data.get('labels')
-            if not data:
-                return
-            for key in data:
-                val = data[key]
-                for helper in helpers.helpers:
-                    if helper['caption'] == key:
-                        helper['label'] = val
-                        #print(helper)
-                        continue
+            all = json.load(f)
+
+            data = all.get('labels')
+            if data:
+                for key in data:
+                    val = data[key]
+                    for helper in helpers.helpers:
+                        if helper['caption'] == key:
+                            helper['label'] = val
+                            #print(helper)
+                            continue
+
+            data = all.get('on_save')
+            if data:
+                for key in data:
+                    val = data[key]
+                    for helper in helpers.helpers:
+                        if helper['caption'] == key:
+                            helper['on_save'] = val
+                            #print(helper)
+                            continue
 
 
     def format(self):
@@ -219,7 +230,38 @@ class Command:
                     del data['labels'][helper['caption']]
             else:
                 if label:
-                    data = {'labels': {helper['caption']: label}}
+                    data['labels'] = {helper['caption']: label}
+
+            with open(FN_CFG, 'w', encoding='utf8') as f:
+                s = json.dumps(data, indent=2)
+                f.write(s)
+
+
+    def config_label_save(self):
+
+        while True:
+            caps = [item['caption']+(' -- on_save' if item['on_save'] else '')+
+                    '\t'+item['lexers'] for item in helpers.helpers]
+            res = app.dlg_menu(app.MENU_LIST, caps, caption='Formatters label "save"')
+            if res is None:
+                return
+
+            helper = helpers.helpers[res]
+            helper['on_save'] = not helper['on_save']
+
+            data = {}
+            if os.path.isfile(FN_CFG):
+                with open(FN_CFG, 'r', encoding='utf8') as f:
+                    data = json.load(f)
+
+            if 'on_save' in data:
+                if helper['on_save']:
+                    data['on_save'][helper['caption']] = True
+                else:
+                    del data['on_save'][helper['caption']]
+            else:
+                if helper['on_save']:
+                    data['on_save'] = {helper['caption']: True}
 
             with open(FN_CFG, 'w', encoding='utf8') as f:
                 s = json.dumps(data, indent=2)
