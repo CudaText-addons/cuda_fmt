@@ -73,6 +73,18 @@ class Helpers:
                 self.helpers.append(helper)
 
 
+    def get_item_props(self, helper):
+
+        module = helper['module']
+        method = helper['method']
+        caption = helper['caption']
+        force_all = helper['force_all']
+
+        _m = importlib.import_module(module)
+        func = getattr(_m, method)
+        return (func, caption, force_all)
+
+
     def get_props(self, lexer):
 
         d = self.helpers_for_lexer(lexer)
@@ -86,14 +98,7 @@ class Helpers:
             if res is None: return False
             item = d[res]
 
-        module = item['module']
-        method = item['method']
-        caption = item['caption']
-        force_all = item['force_all']
-
-        _m = importlib.import_module(module)
-        func = getattr(_m, method)
-        return (func, caption, force_all)
+        return self.get_item_props(item)
 
 
     def get_props_on_save(self, lexer):
@@ -103,16 +108,7 @@ class Helpers:
 
         d = [h for h in d if h['on_save']]
         if not d: return
-        item = d[0]
-
-        module = item['module']
-        method = item['method']
-        caption = item['caption']
-        force_all = item['force_all']
-
-        _m = importlib.import_module(module)
-        func = getattr(_m, method)
-        return (func, caption)
+        return self.get_item_props(d[0])
 
 
 helpers = Helpers()
@@ -194,7 +190,7 @@ class Command:
         if not res: # None or False
             return
 
-        func, caption = res
+        func, caption, _ = res
         run_format(func, '['+caption+'] ', True)
 
 
