@@ -96,6 +96,25 @@ class Helpers:
         return (func, caption, force_all)
 
 
+    def get_props_on_save(self, lexer):
+
+        d = self.helpers_for_lexer(lexer)
+        if not d: return
+
+        d = [h for h in d if h['on_save']]
+        if not d: return
+        item = d[0]
+
+        module = item['module']
+        method = item['method']
+        caption = item['caption']
+        force_all = item['force_all']
+
+        _m = importlib.import_module(module)
+        func = getattr(_m, method)
+        return (func, caption)
+
+
 helpers = Helpers()
 helpers.load_dir(app.app_path(app.APP_DIR_PY))
 print('Formatters: ' + ', '.join(helpers.lexers()))
@@ -163,6 +182,20 @@ class Command:
 
         func, caption, force_all = res
         run_format(func, '['+caption+'] ', force_all)
+
+
+    def on_save_pre(self, ed_self):
+
+        lexer = ed_self.get_prop(app.PROP_LEXER_FILE)
+        if not lexer:
+            return
+
+        res = helpers.get_props_on_save(lexer)
+        if not res: # None or False
+            return
+
+        func, caption = res
+        run_format(func, '['+caption+'] ', True)
 
 
     def config(self, is_global):

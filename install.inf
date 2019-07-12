@@ -58,3 +58,7 @@ section=commands
 caption=CudaFormatter\Configure formatter (local)...
 method=config_local
 menu=op
+
+[item40]
+section=events
+events=on_save_pre
