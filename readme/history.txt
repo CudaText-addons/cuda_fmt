@@ -1,4 +1,8 @@
 
+2019.07.12
++ add: support auto formatting on file save
++ add: command "Configure on_save" added to choose which formatters are active on file save
+
 2019.07.11
 + add: support multi-selections
 + add: specially handle EOL at end of selected text, gives better result with Markdown Table Format
