@@ -7,7 +7,7 @@ Commands in Plugins menu
 
 - Formatter (menu): Runs formatter for current editor file. If several formatters are found, menu dialog will suggest to choose one of them.
 
-- Formatter A...: Runs formatter for current editor file, which has label (A, B, C, D) set. Labels are configurable by another command.
+- Formatter A...D: Runs formatter for current editor file, which has label (A, B, C, D) set. Labels are configurable by another command.
 
 - Configure on_save: Chooses which formatters are active on file saving. The first formatter, which is suitable for current lexer, and has the flag "on_save", will be used to format text on file saving.
 
