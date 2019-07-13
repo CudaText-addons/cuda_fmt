@@ -25,6 +25,9 @@ def run_format(ed, do_format, msg, force_all):
                 x0, y0, x1, y1 = x1, y1, x0, y0
 
             text1 = ed.get_text_substr(x0, y0, x1, y1)
+            if not text1.strip():
+                continue
+
             with_eol = text1.endswith('\n')
             if with_eol:
                 text1 = text1.rstrip('\n')
@@ -53,6 +56,8 @@ def run_format(ed, do_format, msg, force_all):
         # format entire file
         x0, y0, x1, y1 = ed.get_carets()[0]
         text1 = ed.get_text_all()
+        if not text1.strip():
+            return
         text = do_format(text1)
 
         if not text:
