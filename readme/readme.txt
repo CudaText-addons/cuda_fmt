@@ -1,7 +1,5 @@
 Framework to use code formatters in CudaText. Formatters are Python functions which change entire file text or only selected text. Formatters are distributed as separate 2nd-level plugins, which are called via this framework. This approach is like CudaLint and its linters.
 
-All existing plugins like "JS Format", "Python ReIndent", "SQL Format", "CSS Minifier" will be converted to formatters form.
-
 Commands in Plugins menu
 ------------------------
 
@@ -17,8 +15,9 @@ Commands in Plugins menu
 
 - Configure formatter (local): For those formatters which suppots config file, command will suggest to open "local" config (in the folder of current editor file). If local config not exists, plugin will suggest to create it from global config.
 
-How to write
-------------
+Docs
+----
+No docs yet.
 To see how to write formatters, install "Formatters for JavaScript" which has most of features.
 
 
