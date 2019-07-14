@@ -58,7 +58,7 @@ def run_format(ed, do_format, msg, force_all):
 
     else:
         # format entire file
-        x0, y0, x1, y1 = ed.get_carets()[0]
+        x0, y0, x1, y1 = carets[0]
         text1 = ed.get_text_all()
         if not text1.strip():
             return
