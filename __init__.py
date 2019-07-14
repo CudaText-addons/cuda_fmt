@@ -222,6 +222,10 @@ class Command:
 
     def config_local(self):
 
+        if not ed.get_filename():
+            msg_box('Cannot open local config for untitled tab', MB_OK+MB_ICONWARNING)
+            return
+
         self.config(False)
 
     def config_labels(self):

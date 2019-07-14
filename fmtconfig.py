@@ -2,6 +2,8 @@ import os
 import shutil
 from cudatext import *
 
+ed_filename = ''
+
 class FmtConfig:
     def __init__(self, fn, dir):
         self.fn = fn
@@ -14,9 +16,8 @@ class FmtConfig:
         self.ini_global = ini
 
     def ini_local(self):
-        fn = ed.get_filename()
-        if fn:
-            return os.path.join(os.path.dirname(fn), self.fn)
+        if ed_filename:
+            return os.path.join(os.path.dirname(ed_filename), self.fn)
         else:
             return ''
 
@@ -34,7 +35,9 @@ class FmtConfig:
             msg_box('Global config file "%s" not found' % self.fn, MB_OK)
 
     def config_local(self):
-        if not ed.get_filename():
+        global ed_filename
+        ed_filename = ed.get_filename()
+        if not ed_filename:
             msg_box('Cannot open local config file for untitled tab', MB_OK)
             return
         ini = self.ini_local()

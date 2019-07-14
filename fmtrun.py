@@ -1,4 +1,5 @@
 from cudatext import *
+from .fmtconfig import ed_filename
 
 def is_selected(carets):
 
@@ -14,6 +15,7 @@ def run_format(ed, do_format, msg, force_all):
         msg_status(msg + "Column selection is not supported")
         return
 
+    ed_filename = ed.get_filename()
     carets = ed.get_carets()
     use_all = force_all or not is_selected(carets)
 
