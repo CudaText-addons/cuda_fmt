@@ -80,4 +80,4 @@ def run_format(ed, do_format, msg, force_all):
         if y0 < cnt and y1 < cnt:
             ed.set_caret(x0, y0, x1, y1)
         else:
-            ed.set_caret(0, min(y0, y1))
+            ed.set_caret(0, cnt-1)
