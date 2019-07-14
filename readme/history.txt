@@ -1,4 +1,7 @@
 
+2019.07.14
+- fix: wrong local config filename was used for passive editors
+
 2019.07.12
 + add: support auto formatting on file save (even for "Save all" with saving passive tabs)
 + add: command "Configure on_save" to choose which formatters are active on file save
