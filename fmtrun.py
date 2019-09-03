@@ -72,7 +72,7 @@ def run_format(ed, do_format, msg, force_all):
             msg_status(msg + 'Text is already formatted')
             return
 
-        ed.set_text_all(text)
+        ed.replace(0, 0, 0, ed.get_line_count(), text)
         msg_status(msg + "Formatted entire text")
 
         # restore caret pos

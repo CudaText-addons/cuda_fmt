@@ -1,4 +1,7 @@
 
+2019.09.03
++ add: on CudaText 1.86+, avoid loosing Undo information on formatting entire file
+
 2019.07.14
 - fix: wrong local config filename was used for passive editors
 
