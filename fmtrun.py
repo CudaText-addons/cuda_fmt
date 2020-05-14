@@ -78,6 +78,29 @@ def run_format(ed, do_format, msg, force_all):
         # restore caret pos
         cnt = ed.get_line_count()
         if y0 < cnt and y1 < cnt:
+            # Validate empty selection
+            if (x1, y1) == (-1, -1):
+                x1, y1 = x0, y0
+
+            # Order caret's values
+            if (y0, x0) > (y1, x1):
+                x0, x1 = x1, x0
+                y0, y1 = y1, y0
+
+            # Validate max length for caret's initial position
+            max_x = len(ed.get_text_line(y0))
+
+            if max_x:
+                x0 = min(x0, max_x)
+
+            # Validate max length for caret's end position
+            max_x = len(ed.get_text_line(y1))
+            if max_x:
+                x1 = min(x1, max_x)
+
+            # First ensure display left margin
+            ed.set_caret(0, y0)
+
             ed.set_caret(x0, y0, x1, y1)
         else:
             ed.set_caret(0, cnt-1)
