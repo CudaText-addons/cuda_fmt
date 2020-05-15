@@ -75,9 +75,9 @@ def run_format(ed, do_format, msg, force_all):
         ed.replace(0, 0, 0, ed.get_line_count(), text)
         msg_status(msg + "Formatted entire text")
 
-        # restore caret pos
+        # move caret (previous text could have too long lines or too many lines)
         cnt = ed.get_line_count()
         if y0 < cnt and y1 < cnt:
-            ed.set_caret(x0, y0, x1, y1)
+            ed.set_caret(0, min(y0, y1))
         else:
             ed.set_caret(0, cnt-1)
