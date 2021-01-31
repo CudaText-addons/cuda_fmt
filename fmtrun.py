@@ -1,6 +1,10 @@
 from cudatext import *
 from . import fmtconfig
 
+from cudax_lib import get_translation
+_   = get_translation(__file__)  # i18n
+
+
 def is_selected(carets):
 
     for c in carets:
@@ -12,7 +16,7 @@ def is_selected(carets):
 def run_format(ed, do_format, msg, force_all):
 
     if ed.get_sel_mode() != SEL_NORMAL:
-        msg_status(msg + "Column selection is not supported")
+        msg_status(msg + _("Column selection is not supported"))
         return
 
     fmtconfig.ed_filename = ed.get_filename()
@@ -50,11 +54,11 @@ def run_format(ed, do_format, msg, force_all):
             nsel += 1
 
         if nsel>1:
-            msg_status(msg + "Formatted %d selections"%nsel)
+            msg_status(msg + _("Formatted {} selections").format(nsel))
         elif nsel==1:
-            msg_status(msg + "Formatted selection")
+            msg_status(msg + _("Formatted selection"))
         else:
-            msg_status(msg + "Cannot format selection(s)")
+            msg_status(msg + _("Cannot format selection(s)"))
 
     else:
         # format entire file
@@ -65,15 +69,15 @@ def run_format(ed, do_format, msg, force_all):
         text = do_format(text1)
 
         if not text:
-            msg_status(msg + "Cannot format text")
+            msg_status(msg + _("Cannot format text"))
             return
 
         if text==text1:
-            msg_status(msg + 'Text is already formatted')
+            msg_status(msg + _('Text is already formatted'))
             return
 
         ed.replace(0, 0, 0, ed.get_line_count(), text)
-        msg_status(msg + "Formatted entire text")
+        msg_status(msg + _("Formatted entire text"))
 
         # move caret (previous text could have too long lines or too many lines)
         cnt = ed.get_line_count()

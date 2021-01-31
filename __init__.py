@@ -7,6 +7,9 @@ from cudatext import ed
 from .fmtconfig import *
 from .fmtrun import *
 
+from cudax_lib import get_translation
+_   = get_translation(__file__)  # i18n
+
 FN_CFG = os.path.join(app.app_path(app.APP_DIR_SETTINGS), 'cuda_fmt.json')
 
 class Helpers:
@@ -97,7 +100,7 @@ class Helpers:
             item = d[0]
         else:
             items = [item['caption'] for item in d]
-            res = app.dlg_menu(app.MENU_LIST, items, caption='Formatters for %s'%lexer)
+            res = app.dlg_menu(app.MENU_LIST, items, caption=_('Formatters for %s')%lexer)
             if res is None: return False
             item = d[res]
 
@@ -116,7 +119,7 @@ class Helpers:
 
 helpers = Helpers()
 helpers.load_dir(app.app_path(app.APP_DIR_PY))
-print('Formatters: ' + ', '.join(helpers.lexers()))
+print(_('Formatters: ') + ', '.join(helpers.lexers()))
 
 
 def get_config_filename(caption):
@@ -168,12 +171,12 @@ class Command:
 
         lexer = ed.get_prop(app.PROP_LEXER_FILE)
         if not lexer:
-            app.msg_status('No formatters for None-lexer')
+            app.msg_status(_('No formatters for None-lexer'))
             return
 
         res = helpers.get_props(lexer)
         if res is None:
-            app.msg_status('No formatters for "%s"'%lexer)
+            app.msg_status(_('No formatters for "%s"')%lexer)
             return
 
         if res==False:
@@ -201,12 +204,12 @@ class Command:
 
         items = [item for item in helpers.helpers if item['config']]
         if not items:
-            app.msg_status('No configurable formatters')
+            app.msg_status(_('No configurable formatters'))
             return
 
         caps = ['%s\t%s'%(item['caption'], item['lexers']) for item in items]
 
-        res = app.dlg_menu(app.MENU_LIST, caps, caption='Formatters')
+        res = app.dlg_menu(app.MENU_LIST, caps, caption=_('Formatters'))
         if res is None: return
         item = items[res]
 
@@ -223,7 +226,7 @@ class Command:
     def config_local(self):
 
         if not ed.get_filename():
-            msg_box('Cannot open local config for untitled tab', MB_OK+MB_ICONWARNING)
+            msg_box(_('Cannot open local config for untitled tab'), MB_OK+MB_ICONWARNING)
             return
 
         self.config(False)
@@ -233,7 +236,7 @@ class Command:
         while True:
             caps = [item['caption']+((' -- '+item['label']) if item['label'] else '')+
                     '\t'+item['lexers'] for item in helpers.helpers]
-            res = app.dlg_menu(app.MENU_LIST, caps, caption='Formatters labels')
+            res = app.dlg_menu(app.MENU_LIST, caps, caption=_('Formatters labels'))
             if res is None:
                 return
 
@@ -241,9 +244,9 @@ class Command:
             label = helper['label'] or '_'
 
             res = app.dlg_menu(app.MENU_LIST,
-                ['(None)', 'A', 'B', 'C', 'D'],
+                [_('(None)'), 'A', 'B', 'C', 'D'],
                 focused = '_ABCD'.find(label),
-                caption = 'Label for "%s"'%helper['caption']
+                caption = _('Label for "%s"')%helper['caption']
                 )
             if res is None:
                 continue
@@ -278,7 +281,7 @@ class Command:
         while True:
             caps = [item['caption']+(' -- on_save' if item['on_save'] else '')+
                     '\t'+item['lexers'] for item in helpers.helpers]
-            res = app.dlg_menu(app.MENU_LIST, caps, caption='Formatters label "save"')
+            res = app.dlg_menu(app.MENU_LIST, caps, caption=_('Formatters label "save"'))
             if res is None:
                 return
 
@@ -312,7 +315,7 @@ class Command:
 
         items = helpers.helpers_for_lexer(lexer)
         if not items:
-            app.msg_status('No formatters for "%s"'%lexer)
+            app.msg_status(_('No formatters for "%s"')%lexer)
             return
 
         for helper in items:
@@ -326,7 +329,7 @@ class Command:
                     )
                 return
 
-        app.msg_status('No formatter for "%s" with label "%s"'%(lexer, label))
+        app.msg_status(_('No formatter for "{}" with label "{}"').format(lexer, label))
 
 
     def format_a(self):

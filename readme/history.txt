@@ -1,4 +1,7 @@
 
+2021.01.31
++ add: support translations (from Markus)
+
 2020.05.15
 + add: after formatting some block, move caret to begin of block 
 

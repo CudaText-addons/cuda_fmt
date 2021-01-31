@@ -2,6 +2,9 @@ import os
 import shutil
 from cudatext import *
 
+from cudax_lib import get_translation
+_   = get_translation(__file__)  # i18n
+
 ed_filename = ''
 ed_lexer = ''
 
@@ -33,14 +36,14 @@ class FmtConfig:
         if os.path.isfile(self.ini_global):
             file_open(self.ini_global)
         else:
-            msg_box('Global config file "%s" not found' % self.fn, MB_OK)
+            msg_box(_('Global config file "%s" not found') % self.fn, MB_OK)
 
     def config_local(self):
         global ed_filename
         ed_filename = ed.get_filename()
 
         if not ed_filename:
-            msg_box('Cannot open local config file for untitled tab', MB_OK)
+            msg_box(_('Cannot open local config file for untitled tab'), MB_OK)
             return
 
         ini = self.ini_local()
@@ -50,12 +53,12 @@ class FmtConfig:
             return
 
         if not os.path.isfile(ini0):
-            msg_box('Global config file "%s" not found' % self.fn, MB_OK)
+            msg_box(_('Global config file "%s" not found') % self.fn, MB_OK)
             return
 
-        if msg_box('Local config file "%s" not found.\nDo you want to create it?' % self.fn, MB_OKCANCEL)==ID_OK:
+        if msg_box(_('Local config file "%s" not found.\nDo you want to create it?') % self.fn, MB_OKCANCEL)==ID_OK:
             shutil.copyfile(ini0, ini)
             if os.path.isfile(ini):
                 file_open(ini)
             else:
-                msg_box('Cannot copy global config file "%s" to local folder' % self.fn, MB_OK)
+                msg_box(_('Cannot copy global config file "%s" to local folder') % self.fn, MB_OK)
