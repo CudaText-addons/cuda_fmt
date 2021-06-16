@@ -100,7 +100,7 @@ class Helpers:
             item = d[0]
         else:
             items = [item['caption'] for item in d]
-            res = app.dlg_menu(app.MENU_LIST, items, caption=_('Formatters for %s')%lexer)
+            res = app.dlg_menu(app.DMENU_LIST, items, caption=_('Formatters for %s')%lexer)
             if res is None: return False
             item = d[res]
 
@@ -209,7 +209,7 @@ class Command:
 
         caps = ['%s\t%s'%(item['caption'], item['lexers']) for item in items]
 
-        res = app.dlg_menu(app.MENU_LIST, caps, caption=_('Formatters'))
+        res = app.dlg_menu(app.DMENU_LIST, caps, caption=_('Formatters'))
         if res is None: return
         item = items[res]
 
@@ -236,14 +236,14 @@ class Command:
         while True:
             caps = [item['caption']+((' -- '+item['label']) if item['label'] else '')+
                     '\t'+item['lexers'] for item in helpers.helpers]
-            res = app.dlg_menu(app.MENU_LIST, caps, caption=_('Formatters labels'))
+            res = app.dlg_menu(app.DMENU_LIST, caps, caption=_('Formatters labels'))
             if res is None:
                 return
 
             helper = helpers.helpers[res]
             label = helper['label'] or '_'
 
-            res = app.dlg_menu(app.MENU_LIST,
+            res = app.dlg_menu(app.DMENU_LIST,
                 [_('(None)'), 'A', 'B', 'C', 'D'],
                 focused = '_ABCD'.find(label),
                 caption = _('Label for "%s"')%helper['caption']
@@ -281,7 +281,7 @@ class Command:
         while True:
             caps = [item['caption']+(' -- on_save' if item['on_save'] else '')+
                     '\t'+item['lexers'] for item in helpers.helpers]
-            res = app.dlg_menu(app.MENU_LIST, caps, caption=_('Formatters label "save"'))
+            res = app.dlg_menu(app.DMENU_LIST, caps, caption=_('Formatters label "save"'))
             if res is None:
                 return
 
