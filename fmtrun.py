@@ -40,7 +40,11 @@ def run_format(ed, do_format, msg, force_all):
             if with_eol:
                 text1 = text1.rstrip('\n')
 
+            ed.lock()
+            app_idle(True)
             text = do_format(text1)
+            ed.unlock()
+
             if not text:
                 continue
             if text==text1:
@@ -66,7 +70,11 @@ def run_format(ed, do_format, msg, force_all):
         text1 = ed.get_text_all()
         if not text1.strip():
             return
+
+        ed.lock()
+        app_idle(True)
         text = do_format(text1)
+        ed.unlock()
 
         if not text:
             msg_status(msg + _("Cannot format text"))
