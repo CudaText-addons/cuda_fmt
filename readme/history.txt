@@ -1,4 +1,7 @@
 
+2021.06.30
++ add: editor is locked during formatting
+
 2021.06.17
 - fix: avoid deprecated API
 
