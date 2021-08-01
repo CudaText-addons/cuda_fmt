@@ -41,9 +41,11 @@ def run_format(ed, do_format, msg, force_all):
                 text1 = text1.rstrip('\n')
 
             ed.lock()
-            app_idle(True)
-            text = do_format(text1)
-            ed.unlock()
+            try:
+                app_idle(True)
+                text = do_format(text1)
+            finally:
+                ed.unlock()
 
             if not text:
                 continue
@@ -72,9 +74,11 @@ def run_format(ed, do_format, msg, force_all):
             return
 
         ed.lock()
-        app_idle(True)
-        text = do_format(text1)
-        ed.unlock()
+        try:
+            app_idle(True)
+            text = do_format(text1)
+        finally:
+            ed.unlock()
 
         if not text:
             msg_status(msg + _("Cannot format text"))
