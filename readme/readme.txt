@@ -12,17 +12,18 @@ Commands in the Plugins menu
 
 - Formatter per-lexer A...D:
   Runs formatter for current editor file, which has label (A, B, C, D) set.
-  Labels are configurable by another command.
+  These are per-lexer labels, ie you can have formatter for label 'B' in C++,
+  and another formatter for 'B' in XML, and another one for JSON.
 
 - Formatter cross-lexer 1...4:
   Runs formatter for current editor file, which has label (1, 2, 3, 4) set.
-  Labels are configurable by another command.
+  These are cross-lexer labels, ie they ignore the current lexer.
 
 - Configure per-lexer labels:
   Allows to assign labels (A, B, C, D) to formatters. Labels allow to use commands
-  "Formatter A"..."Formatter D", e.g. via hotkeys. So you can use command
-  "Formatter A" via some hotkey, and be sure that for all lexers "Formatter A"
-  will use desired formatters.
+  "Formatter per-lexer A" ... "Formatter per-lexer D" (e.g. via hotkeys).
+  These are per-lexer labels, ie you can have formatter for label 'B' in C++,
+  and another formatter for 'B' in XML, and another one for JSON.
 
 - Configure cross-lexer labels:
   Similar to previous item, but for cross-lexer labels (1, 2, 3, 4). For example,
