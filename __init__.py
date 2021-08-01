@@ -156,6 +156,16 @@ class Command:
                             #print(helper)
                             continue
 
+            data = all.get('labels_x')
+            if data:
+                for key in data:
+                    val = data[key]
+                    for helper in helpers.helpers:
+                        if helper['caption'] == key:
+                            helper['label_x'] = val
+                            #print(helper)
+                            continue
+
             data = all.get('on_save')
             if data:
                 for key in data:
@@ -231,21 +241,40 @@ class Command:
 
         self.config(False)
 
+
     def config_labels(self):
 
+        self.config_labels_ex(
+            _('Formatters per-lexer labels'),
+            'ABCD',
+            'label',
+            'labels'
+            )
+
+    def config_labels_cross(self):
+
+        self.config_labels_ex(
+            _('Formatters cross-lexer labels'),
+            '1234',
+            'label_x',
+            'labels_x'
+            )
+
+    def config_labels_ex(self, caption, chars, key_label, key_labels):
+
         while True:
-            caps = [item['caption']+((' -- '+item['label']) if item['label'] else '')+
+            caps = [item['caption']+((' -- '+item[key_label]) if item.get(key_label) else '')+
                     '\t'+item['lexers'] for item in helpers.helpers]
-            res = app.dlg_menu(app.DMENU_LIST, caps, caption=_('Formatters labels'))
+            res = app.dlg_menu(app.DMENU_LIST, caps, caption=caption)
             if res is None:
                 return
 
             helper = helpers.helpers[res]
-            label = helper['label'] or '_'
+            label = helper.get(key_label) or '_'
 
             res = app.dlg_menu(app.DMENU_LIST,
-                [_('(None)'), 'A', 'B', 'C', 'D'],
-                focused = '_ABCD'.find(label),
+                [_('(None)'), chars[0], chars[1], chars[2], chars[3]],
+                focused = ('_'+chars).find(label),
                 caption = _('Label for "%s"')%helper['caption']
                 )
             if res is None:
@@ -253,23 +282,23 @@ class Command:
             if res==0:
                 label = None
             else:
-                label = '_ABCD'[res]
+                label = ('_'+chars)[res]
 
-            helper['label'] = label
+            helper[key_label] = label
 
             data = {}
             if os.path.isfile(FN_CFG):
                 with open(FN_CFG, 'r', encoding='utf8') as f:
                     data = json.load(f)
 
-            if 'labels' in data:
+            if key_labels in data:
                 if label:
-                    data['labels'][helper['caption']] = label
+                    data[key_labels][helper['caption']] = label
                 else:
-                    del data['labels'][helper['caption']]
+                    del data[key_labels][helper['caption']]
             else:
                 if label:
-                    data['labels'] = {helper['caption']: label}
+                    data[key_labels] = {helper['caption']: label}
 
             with open(FN_CFG, 'w', encoding='utf8') as f:
                 s = json.dumps(data, indent=2)
@@ -311,6 +340,7 @@ class Command:
 
         lexer = ed.get_prop(app.PROP_LEXER_FILE)
         if not lexer:
+            app.msg_status(_('No lexer is active'))
             return
 
         items = helpers.helpers_for_lexer(lexer)
@@ -319,7 +349,7 @@ class Command:
             return
 
         for helper in items:
-            if helper['label']==label:
+            if helper.get('label')==label:
                 func, caption, force_all = helpers.get_item_props(helper)
                 run_format(
                     ed,
@@ -330,6 +360,22 @@ class Command:
                 return
 
         app.msg_status(_('No formatter for "{}" with label "{}"').format(lexer, label))
+
+
+    def format_label_x(self, label):
+
+        for helper in helpers.helpers:
+            if helper.get('label_x')==label:
+                func, caption, force_all = helpers.get_item_props(helper)
+                run_format(
+                    ed,
+                    func,
+                    '['+caption+'] ',
+                    force_all
+                    )
+                return
+
+        app.msg_status(_('No cross-lexer formatter with label "{}"').format(label))
 
 
     def format_a(self):
@@ -347,3 +393,20 @@ class Command:
     def format_d(self):
 
         self.format_label('D')
+
+
+    def format_1(self):
+
+        self.format_label_x('1')
+
+    def format_2(self):
+
+        self.format_label_x('2')
+
+    def format_3(self):
+
+        self.format_label_x('3')
+
+    def format_4(self):
+
+        self.format_label_x('4')

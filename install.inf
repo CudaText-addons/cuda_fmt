@@ -10,55 +10,86 @@ section=commands
 caption=CudaFormatter\Formatter (menu)
 method=format
 
-[item2]
+[item10]
 section=commands
-caption=CudaFormatter\Formatter A
+caption=CudaFormatter\Formatter per-lexer: A
 method=format_a
 
-[item3]
+[item11]
 section=commands
-caption=CudaFormatter\Formatter B
+caption=CudaFormatter\Formatter per-lexer: B
 method=format_b
 
-[item4]
+[item12]
 section=commands
-caption=CudaFormatter\Formatter C
+caption=CudaFormatter\Formatter per-lexer: C
 method=format_c
 
-[item5]
+[item13]
 section=commands
-caption=CudaFormatter\Formatter D
+caption=CudaFormatter\Formatter per-lexer: D
 method=format_d
 
-[item9]
+[item19]
 section=commands
 caption=CudaFormatter\-
 method=_
 
-[item10]
+[item21]
 section=commands
-caption=CudaFormatter\Configure labels...
+caption=CudaFormatter\Formatter cross-lexer: 1
+method=format_1
+
+[item22]
+section=commands
+caption=CudaFormatter\Formatter cross-lexer: 2
+method=format_2
+
+[item23]
+section=commands
+caption=CudaFormatter\Formatter cross-lexer: 3
+method=format_3
+
+[item24]
+section=commands
+caption=CudaFormatter\Formatter cross-lexer: 4
+method=format_4
+
+[item29]
+section=commands
+caption=CudaFormatter\-
+method=_
+
+[item100]
+section=commands
+caption=CudaFormatter\Configure per-lexer labels...
 method=config_labels
 menu=op
 
-[item11]
+[item101]
+section=commands
+caption=CudaFormatter\Configure cross-lexer labels...
+method=config_labels_cross
+menu=op
+
+[item105]
 section=commands
 caption=CudaFormatter\Configure on_save...
 method=config_label_save
 menu=op
 
-[item20]
+[item200]
 section=commands
 caption=CudaFormatter\Configure formatter...
 method=config_global
 menu=op
 
-[item21]
+[item201]
 section=commands
 caption=CudaFormatter\Configure formatter (local)...
 method=config_local
 menu=op
 
-[item40]
+[item400]
 section=events
 events=on_save_pre
