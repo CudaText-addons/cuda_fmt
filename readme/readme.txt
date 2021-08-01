@@ -20,15 +20,16 @@ Commands in the Plugins menu
   These are cross-lexer labels, ie they ignore the current lexer.
 
 - Configure per-lexer labels:
-  Allows to assign labels (A, B, C, D) to formatters. Labels allow to use commands
+  Allows to assign labels A, B, C, D. Labels allow to use commands
   "Formatter per-lexer A" ... "Formatter per-lexer D" (e.g. via hotkeys).
-  These are per-lexer labels, ie you can have formatter for label 'B' in C++,
-  and another formatter for 'B' in XML, and another one for JSON.
+  These are per-lexer labels, ie you can have formatter 'A' for C++,
+  and another formatter 'A' for XML, and another formatter 'A' for JSON.
 
 - Configure cross-lexer labels:
-  Similar to previous item, but for cross-lexer labels (1, 2, 3, 4). For example,
-  if formatter "XML Tidy" has the cross-lexer label "2", then calling
-  of formatter "2" will always run "XML Tidy", ignoring the current lexer.
+  Similar to previous item, but for cross-lexer labels 1, 2, 3, 4.
+  For example, if formatter "XML Tidy" has the cross-lexer label "2",
+  then running formatter "2" will always run "XML Tidy", ignoring
+  the current lexer, ignoring the file type.
 
 - Configure on_save:
   Chooses which formatters are active on file saving. The first formatter,
