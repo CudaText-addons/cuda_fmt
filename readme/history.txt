@@ -1,4 +1,7 @@
 
+2021.08.01
++ add: reworked config, now we have per-lexer labels (A B C D) + cross-lexer labels (1 2 3 4)
+
 2021.06.30
 + add: editor is locked during formatting
 
