@@ -179,6 +179,10 @@ class Command:
 
     def format(self):
 
+        if len(ed.get_carets())>1:
+            app.msg_status(_('Multi-carets are not supported yet'))
+            return
+
         lexer = ed.get_prop(app.PROP_LEXER_FILE)
         if not lexer:
             app.msg_status(_('No formatters for None-lexer'))
@@ -337,6 +341,10 @@ class Command:
 
 
     def format_label(self, label):
+        
+        if len(ed.get_carets())>1:
+            app.msg_status(_('Multi-carets are not supported yet'))
+            return
 
         lexer = ed.get_prop(app.PROP_LEXER_FILE)
         if not lexer:
@@ -363,6 +371,10 @@ class Command:
 
 
     def format_label_x(self, label):
+
+        if len(ed.get_carets())>1:
+            app.msg_status(_('Multi-carets are not supported yet'))
+            return
 
         for helper in helpers.helpers:
             if helper.get('label_x')==label:
