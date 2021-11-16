@@ -15,6 +15,45 @@ FN_CFG = os.path.join(app.app_path(app.APP_DIR_SETTINGS), 'cuda_fmt.json')
 class Helpers:
     helpers = []
 
+    def get_editor_lexer():
+
+        carets = ed.get_carets()
+        if len(carets)==0:
+            app.msg_status(_('Cannot handle none-carets'))
+            return
+
+        if len(carets)>1:
+            app.msg_status(_('Cannot handle multi-carets yet'))
+            return
+
+        lexer0 = ed.get_prop(app.PROP_LEXER_FILE)
+        if not lexer0:
+            app.msg_status(_('Cannot handle None-lexer'))
+            return
+
+        x1, y1, x2, y2 = carets[0]
+        if y2<0:
+            return lexer0
+
+        if (y1, x1)>(y2, x2):
+            x1, y1, x2, y2 = x2, y2, x1, y1
+
+        # decrease ending pos, it's often after the sub-lexer ending
+        if x2>0:
+            x2 -= 1
+        elif y2>0:
+            y2 -= 1
+            x2 = len(ed.get_text_line(y2))
+
+        lexer1 = ed.get_prop(PROP_LEXER_POS, (x1, y1))
+        lexer2 = ed.get_prop(PROP_LEXER_POS, (x2, y2))
+        if lexer1!=lexer2:
+            app.msg_status(_('Selection overlaps sub-lexer block: "%s"/"%s"' % (lexer1, lexer2)))
+            return
+
+        return lexer1
+
+
     def lexers(self):
 
         r = ''
@@ -179,13 +218,8 @@ class Command:
 
     def format(self):
 
-        if len(ed.get_carets())>1:
-            app.msg_status(_('Multi-carets are not supported yet'))
-            return
-
-        lexer = ed.get_prop(app.PROP_LEXER_FILE)
+        lexer = Helpers.get_editor_lexer()
         if not lexer:
-            app.msg_status(_('No formatters for None-lexer'))
             return
 
         res = helpers.get_props(lexer)
@@ -341,14 +375,9 @@ class Command:
 
 
     def format_label(self, label):
-        
-        if len(ed.get_carets())>1:
-            app.msg_status(_('Multi-carets are not supported yet'))
-            return
 
-        lexer = ed.get_prop(app.PROP_LEXER_FILE)
+        lexer = Helpers.get_editor_lexer()
         if not lexer:
-            app.msg_status(_('No lexer is active'))
             return
 
         items = helpers.helpers_for_lexer(lexer)
@@ -373,7 +402,7 @@ class Command:
     def format_label_x(self, label):
 
         if len(ed.get_carets())>1:
-            app.msg_status(_('Multi-carets are not supported yet'))
+            app.msg_status(_('Cannot handle multi-carets yet'))
             return
 
         for helper in helpers.helpers:

@@ -1,4 +1,7 @@
 
+2021.11.16
++ add: consider selection inside sub-lexer block (thanks @smartmic)
+
 2021.08.01
 + add: reworked config, now we have per-lexer labels (A B C D) + cross-lexer labels (1 2 3 4)
 
