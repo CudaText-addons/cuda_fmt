@@ -48,7 +48,7 @@ class Helpers:
         lexer1 = ed.get_prop(PROP_LEXER_POS, (x1, y1))
         lexer2 = ed.get_prop(PROP_LEXER_POS, (x2, y2))
         if lexer1!=lexer2:
-            app.msg_status(_('Selection overlaps sub-lexer block: "%s"/"%s"' % (lexer1, lexer2)))
+            app.msg_status(_('Selection overlaps sub-lexer block: "{}"/"{}"').format(lexer1, lexer2))
             return
 
         return lexer1
@@ -227,7 +227,7 @@ class Command:
             app.msg_status(_('No formatters for "%s"')%lexer)
             return
 
-        if res==False:
+        if res is False:
             return
 
         func, caption, force_all = res
