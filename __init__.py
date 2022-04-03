@@ -456,8 +456,13 @@ class Command:
         for helper in items:
             if helper.get('minifier'):
                 func, caption, force_all = helpers.get_item_props(helper)
-                text = ed.get_text_all()
-                text = func(text)
+                text0 = ed.get_text_all()
+                text = func(text0)
+                is_same = text==text0
+                del text0
+                if is_same:
+                    msg_status(_('Already minified'))
+                    return
                 with open(fn_new, 'w', encoding='utf-8') as f:
                     f.write(text)
                 msg_status(_('Minified to "%s"'%os.path.basename(fn_new)))
