@@ -19,6 +19,13 @@ Commands in the Plugins menu
   Runs formatter for current editor file, which has label (1, 2, 3, 4) set.
   These are cross-lexer labels, ie they ignore the current lexer.
 
+- Minify to separate file:
+  Runs the 'minifier', and puts its output to a separate file
+  filename.min.js (example for JavaScript). The ".min" is inserted to get
+  the new filename.
+  What is 'minifier' here? It is a usual formatter, which is marked in the
+  formatter's install.inf file, by line "minifier=1".
+
 - Configure per-lexer labels:
   Allows to assign labels A, B, C, D. Labels allow to use commands
   "Formatter per-lexer A" ... "Formatter per-lexer D" (e.g. via hotkeys).
