@@ -1,4 +1,7 @@
 
+2022.04.03
++ add: command "Minify to separate file". It needs the line "minifier=1" in the [fmtX] section of formatter's install.inf.
+
 2021.11.16
 + add: consider selection inside sub-lexer block (thanks @smartmic)
 
