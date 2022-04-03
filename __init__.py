@@ -466,7 +466,7 @@ class Command:
                 with open(fn_new, 'w', encoding='utf-8') as f:
                     f.write(text)
                 msg_status(_('Minified to "%s"'%os.path.basename(fn_new)))
-                file_open(os.path.basename(fn_new), -1, '/passive')
+                file_open(fn_new, -1, '/passive')
                 return
 
         app.msg_status(_('No minifier for "%s"')%lexer)
