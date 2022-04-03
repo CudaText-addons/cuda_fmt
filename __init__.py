@@ -99,6 +99,7 @@ class Helpers:
                 if not s_caption: break
                 s_config = app.ini_read(fn_inf, section, 'config', '')
                 force_all = app.ini_read(fn_inf, section, 'force_all', '')=='1'
+                minifier = app.ini_read(fn_inf, section, 'minifier', '')=='1'
 
                 helper = {
                         'dir': dir,
@@ -109,6 +110,7 @@ class Helpers:
                         'caption': s_caption,
                         'config': s_config,
                         'force_all': force_all,
+                        'minifier': minifier,
                         'label': None,
                         'on_save': False,
                         }
@@ -417,6 +419,51 @@ class Command:
                 return
 
         app.msg_status(_('No cross-lexer formatter with label "{}"').format(label))
+
+
+    def get_min_filename(self, fn):
+
+        if not fn:
+            return '', _('Cannot handle untitled tab')
+
+        dir = os.path.dirname(fn)
+        fn1 = os.path.basename(fn)
+        n = fn1.rfind('.')
+        if n<0:
+            return '', _('File name does not contain "." char')
+
+        fn_new = dir + os.sep + fn1[:n] + '.min' + fn1[n:]
+        return fn_new, ''
+
+
+    def minify(self):
+
+        fn_new, error = self.get_min_filename(ed.get_filename())
+        if not fn_new:
+            msg_status(error)
+            return
+
+        lexer = Helpers.get_editor_lexer()
+        if not lexer:
+            msg_status(_('No lexer active'))
+            return
+
+        items = helpers.helpers_for_lexer(lexer)
+        if not items:
+            msg_status(_('No formatters for "%s"')%lexer)
+            return
+
+        for helper in items:
+            if helper.get('minifier'):
+                func, caption, force_all = helpers.get_item_props(helper)
+                text = ed.get_text_all()
+                text = func(text)
+                with open(fn_new, 'w', encoding='utf-8') as f:
+                    f.write(text)
+                msg_status(_('Minified to "%s"'%os.path.basename(fn_new)))
+                return
+
+        app.msg_status(_('No minifier for "%s"')%lexer)
 
 
     def format_a(self):

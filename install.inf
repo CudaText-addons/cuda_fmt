@@ -55,6 +55,11 @@ section=commands
 caption=CudaFormatter\Formatter cross-lexer: 4
 method=format_4
 
+[item28]
+section=commands
+caption=CudaFormatter\Minify to separate file
+method=minify
+
 [item29]
 section=commands
 caption=CudaFormatter\-
