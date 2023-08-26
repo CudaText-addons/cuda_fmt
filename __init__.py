@@ -350,7 +350,7 @@ class Command:
         while True:
             caps = [item['caption']+(' -- on_save' if item['on_save'] else '')+
                     '\t'+item['lexers'] for item in helpers.helpers]
-            res = app.dlg_menu(app.DMENU_LIST, caps, caption=_('Formatters label "save"'))
+            res = app.dlg_menu(app.DMENU_LIST, caps, caption=_('Formatters label "on_save"'))
             if res is None:
                 return
 
