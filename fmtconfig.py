@@ -5,8 +5,8 @@ from cudatext import *
 from cudax_lib import get_translation
 _   = get_translation(__file__)  # i18n
 
+ed_fmt = ed
 ed_filename = ''
-ed_lexer = ''
 
 class FmtConfig:
     def __init__(self, fn, dir):

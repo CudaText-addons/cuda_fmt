@@ -19,8 +19,8 @@ def run_format(ed, do_format, msg, force_all):
         msg_status(msg + _("Column selection is not supported"))
         return
 
+    fmtconfig.ed_fmt = ed
     fmtconfig.ed_filename = ed.get_filename()
-    fmtconfig.ed_lexer = ed.get_prop(PROP_LEXER_FILE)
 
     carets = ed.get_carets()
     use_all = force_all or not is_selected(carets)

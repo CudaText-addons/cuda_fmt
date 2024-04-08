@@ -1,3 +1,5 @@
+2024.04.08
++ add: added some API in fmtconfig module
 
 2022.04.03
 + add: command "Minify to separate file". It needs the line "minifier=1" in the [fmtX] section of formatter's install.inf.
