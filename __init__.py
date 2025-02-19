@@ -7,7 +7,7 @@ from cudatext import ed
 from .fmtconfig import *
 from .fmtrun import *
 
-from cudax_lib import get_translation
+from cudax_lib import get_translation, get_opt
 _   = get_translation(__file__)  # i18n
 
 FN_CFG = os.path.join(app.app_path(app.APP_DIR_SETTINGS), 'cuda_fmt.json')
@@ -28,7 +28,15 @@ class Helpers:
 
         lexer0 = ed.get_prop(app.PROP_LEXER_FILE)
         if not lexer0:
-            app.msg_status(_('Cannot handle None-lexer'))
+            error_max_size = False
+            fn = ed.get_filename()
+            if fn:
+                size = os.path.getsize(fn)
+                error_max_size = (size > get_opt('ui_max_size_lexer', 2)*1024*1024)
+            if error_max_size:
+                app.msg_status(_('Cannot handle None-lexer; maybe file is big and "ui_max_size_lexer" blocks the lexer?'))
+            else:
+                app.msg_status(_('Cannot handle None-lexer'))
             return
 
         x1, y1, x2, y2 = carets[0]
