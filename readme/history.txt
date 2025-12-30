@@ -1,3 +1,6 @@
+2025.12.30
++ add: formatting now tries to keep line-states (code from @Hanatarou)
+
 2024.04.08
 + add: added some API in fmtconfig module
 
