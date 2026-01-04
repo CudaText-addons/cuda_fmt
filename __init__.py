@@ -131,7 +131,10 @@ class Helpers:
                     # File deleted or inaccessible after get_filename()
                     error_max_size = False
             if error_max_size:
-                app.msg_status(_('Cannot handle None-lexer; maybe file is big and "ui_max_size_lexer" blocks the lexer?'))
+                app.msg_status(_(
+                    'Cannot handle None-lexer; '
+                    'maybe file is big and "ui_max_size_lexer" blocks the lexer?'
+                ))
             else:
                 app.msg_status(_('Cannot handle None-lexer'))
             return
@@ -153,7 +156,9 @@ class Helpers:
         lexer1 = ed.get_prop(PROP_LEXER_POS, (x1, y1))
         lexer2 = ed.get_prop(PROP_LEXER_POS, (x2, y2))
         if lexer1 != lexer2:
-            app.msg_status(_('Selection overlaps sub-lexer block: "{}"/"{}"').format(lexer1, lexer2))
+            app.msg_status(_(
+                'Selection overlaps sub-lexer block: "{}"/"{}"\''
+            ).format(lexer1, lexer2))
             return
 
         return lexer1
@@ -164,7 +169,7 @@ class Helpers:
         Returns:
             Sorted list of unique lexer names
         """
-        lexer_strings = [helper['lexers'] for helper in self.helpers]
+        lexer_strings = [helper.get('lexers', '') for helper in self.helpers]
         all_lexers = ','.join(lexer_strings)
         lexer_list = [lex for lex in all_lexers.split(',') if lex]
         return sorted(set(lexer_list))
@@ -184,14 +189,15 @@ class Helpers:
 
         res = []
         for helper in self.helpers:
-            for item in helper['lexers'].split(','):
+            lexers_str = helper.get('lexers', '')
+            for item in lexers_str.split(','):
                 if item.startswith('regex:'):
                     ok = re.match(item[6:], lexer)
                 else:
                     ok = item == lexer
                 if ok:
                     res.append(helper)
-                    # break
+                    break
         return res
 
     def load_dir(self, plugin_dir: str) -> None:
@@ -265,7 +271,7 @@ class Helpers:
 
                 self.helpers.append(helper)
 
-    def get_item_props(self, helper: dict) -> tuple:
+    def get_item_props(self, helper: Dict[str, Any]) -> Tuple[Callable, str, bool]:
         """Get formatter properties and ensure function is loaded.
 
         Args:
@@ -277,20 +283,30 @@ class Helpers:
         Raises:
             AttributeError: If method not found in module
             ImportError: If module cannot be imported
+            ValueError: If helper missing required keys
         """
-        func = helper['func']
-        caption = helper['caption']
-        force_all = helper['force_all']
+        func = helper.get('func')
+        caption = helper.get('caption', 'Unknown')
+        force_all = helper.get('force_all', False)
 
         if func is None:
-            _m = importlib.import_module(helper['module'])
-            func = getattr(_m, helper['method'])
+            module_name = helper.get('module')
+            method_name = helper.get('method')
+
+            if not module_name or not method_name:
+                raise ValueError(f'Helper missing module or method: {helper}')
+
+            _m = _import_module_cached(module_name)
+            func = getattr(_m, method_name)
             helper['func'] = func
 
         return (func, caption, force_all)
 
     def get_props(self, lexer: str) -> Optional[Tuple[Callable, str, bool]]:
         """Get formatter properties for lexer.
+
+        Args:
+            lexer: Lexer name to search for
 
         Returns:
             Tuple of (func, caption, force_all) or None if no formatter/user cancelled
@@ -302,7 +318,7 @@ class Helpers:
         if len(d) == 1:
             item = d[0]
         else:
-            items = [item['caption'] for item in d]
+            items = [item.get('caption', 'Unknown') for item in d]
             res = app.dlg_menu(app.DMENU_LIST, items, caption=_('Formatters for %s')%lexer)
             if res is None:
                 return None  # User cancelled
@@ -323,7 +339,7 @@ class Helpers:
         if not d:
             return None
 
-        d = [h for h in d if h['on_save']]
+        d = [h for h in d if h.get('on_save')]
         if not d:
             return None
         return self.get_item_props(d[0])
@@ -342,9 +358,13 @@ def get_config_filename(caption: str) -> Optional[str]:
         Path to config file or None if not found
     """
     for helper in helpers.helpers:
-        if helper['caption'] == caption and helper['config']:
-            cfg = FmtConfig(helper['config'], helper['dir'])
-            return cfg.current_filename()
+        config = helper.get('config')
+        if helper.get('caption') == caption and config:
+            config_file = config
+            config_dir = helper.get('dir', '')
+            if config_dir:
+                cfg = FmtConfig(config_file, config_dir)
+                return cfg.current_filename()
     return None
 
 class Command:
@@ -373,7 +393,7 @@ class Command:
             if data:
                 for caption, value in data.items():
                     for helper in helpers.helpers:
-                        if helper['caption'] == caption:
+                        if helper.get('caption') == caption:
                             helper[helper_key] = value
                             break
 
@@ -393,7 +413,11 @@ class Command:
         run_format(ed, func, '['+caption+'] ', force_all)
 
     def on_save_pre(self, ed_self: Any) -> None:
-        """Event handler: auto-format before save if configured."""
+        """Event handler: auto-format before save if configured.
+
+        Args:
+            ed_self: Editor instance
+        """
 
         lexer = ed_self.get_prop(app.PROP_LEXER_FILE)
         if not lexer:
@@ -412,6 +436,9 @@ class Command:
         Supports both legacy file-based config and new method-based config.
         If only one formatter is configurable, opens it directly without menu.
         Only shows formatters that support the current file's lexer.
+
+        Args:
+            is_global: True for global config, False for local config
         """
         # Get current lexer
         lexer = Helpers.get_editor_lexer()
@@ -437,7 +464,7 @@ class Command:
             item = items[0]
         else:
             # Multiple formatters: show menu
-            caps = ['%s\t%s' % (item['caption'], item['lexers']) for item in items]
+            caps = ['%s\t%s' % (item.get('caption', 'Unknown'), item.get('lexers', '')) for item in items]
             res = app.dlg_menu(app.DMENU_LIST, caps, caption=_('Formatters for %s') % lexer)
             if res is None:
                 return
@@ -472,14 +499,17 @@ class Command:
                     return
 
         # Legacy file-based config (fallback)
-        if item.get('config'):
-            cfg = FmtConfig(item['config'], item['dir'])
-            if is_global:
-                cfg.config_global()
-            else:
-                cfg.config_local()
+        config_file = item.get('config')
+        if config_file:
+            config_dir = item.get('dir', '')
+            if config_dir:
+                cfg = FmtConfig(config_file, config_dir)
+                if is_global:
+                    cfg.config_global()
+                else:
+                    cfg.config_local()
         else:
-            app.msg_status(_('No configuration available for "%s"') % item['caption'])
+            app.msg_status(_('No configuration available for "%s"') % item.get('caption', 'formatter'))
 
     def config_help(self) -> None:
         """Show help for selected formatter.
@@ -506,9 +536,11 @@ class Command:
             if item.get('help'):
                 items.append(item)
             else:
-                readme = os.path.join(item['dir'], README_PATH)
-                if os.path.isfile(readme):
-                    items.append(item)
+                item_dir = item.get('dir', '')
+                if item_dir:
+                    readme = os.path.join(item_dir, README_PATH)
+                    if os.path.isfile(readme):
+                        items.append(item)
 
         if not items:
             app.msg_status(_('No formatters with help available for "%s"') % lexer)
@@ -519,7 +551,7 @@ class Command:
             item = items[0]
         else:
             # Multiple formatters: show menu
-            caps = ['%s\t%s' % (item['caption'], item['lexers']) for item in items]
+            caps = ['%s\t%s' % (item.get('caption', 'Unknown'), item.get('lexers', '')) for item in items]
             res = app.dlg_menu(app.DMENU_LIST, caps, caption=_('Formatter Help for %s') % lexer)
             if res is None:
                 return
@@ -544,11 +576,15 @@ class Command:
                     app.msg_status(_('Error calling help method: %s') % str(e))
 
         # Fallback: try readme (executes if no method_name OR if exception occurred)
-        readme = os.path.join(item['dir'], README_PATH)
-        if os.path.isfile(readme):
-            app.file_open(readme)
+        item_dir = item.get('dir', '')
+        if item_dir:
+            readme = os.path.join(item_dir, README_PATH)
+            if os.path.isfile(readme):
+                app.file_open(readme)
+            else:
+                app.msg_status(_('No help available for "%s"') % item.get('caption', 'formatter'))
         else:
-            app.msg_status(_('No help available for "%s"') % item['caption'])
+            app.msg_status(_('No help available for "%s"') % item.get('caption', 'formatter'))
 
     def config_global(self) -> None:
         """Open global formatter configuration.
@@ -584,6 +620,31 @@ class Command:
         # Delegate to config() which now filters by lexer
         self.config(False)
 
+    def _save_label_to_config(self, key: str, caption: str, value: Any) -> None:
+        """Save label configuration to JSON file (internal helper).
+
+        Args:
+            key: Config key (e.g., 'labels', 'on_save')
+            caption: Formatter caption
+            value: Value to save, or None to delete
+        """
+        data = {}
+        if os.path.isfile(FN_CFG):
+            with open(FN_CFG, 'r', encoding='utf8') as f:
+                data = json.load(f)
+
+        if key in data:
+            if value is not None:
+                data[key][caption] = value
+            else:
+                data[key].pop(caption, None)
+        else:
+            if value is not None:
+                data[key] = {caption: value}
+
+        with open(FN_CFG, 'w', encoding='utf8') as f:
+            json.dump(data, f, indent=2)
+
     def config_labels(self) -> None:
         """Configure per-lexer labels for formatters.
 
@@ -618,8 +679,15 @@ class Command:
             key_labels: Dictionary key for all labels in config (e.g., 'labels' or 'labels_x')
         """
         while True:
-            caps = [item['caption']+((' -- '+item[key_label]) if item.get(key_label) else '')+
-                    '\t'+item['lexers'] for item in helpers.helpers]
+            caps = []
+            for item in helpers.helpers:
+                label_val = item.get(key_label)
+                cap = (
+                    item.get('caption', 'Unknown') +
+                    ((' -- ' + label_val) if label_val else '') +
+                    '	' + item.get('lexers', '')
+                )
+                caps.append(cap)
             res = app.dlg_menu(app.DMENU_LIST, caps, caption=caption)
             if res is None:
                 return
@@ -630,7 +698,7 @@ class Command:
             res = app.dlg_menu(app.DMENU_LIST,
                 [_('(None)'), chars[0], chars[1], chars[2], chars[3]],
                 focused = ('_'+chars).find(label),
-                caption = _('Label for "%s"')%helper['caption']
+                caption = _('Label for "%s"') % helper.get('caption', 'Unknown')
                 )
             if res is None:
                 continue
@@ -641,23 +709,9 @@ class Command:
 
             helper[key_label] = label
 
-            data = {}
-            if os.path.isfile(FN_CFG):
-                with open(FN_CFG, 'r', encoding='utf8') as f:
-                    data = json.load(f)
-
-            if key_labels in data:
-                if label:
-                    data[key_labels][helper['caption']] = label
-                else:
-                    del data[key_labels][helper['caption']]
-            else:
-                if label:
-                    data[key_labels] = {helper['caption']: label}
-
-            with open(FN_CFG, 'w', encoding='utf8') as f:
-                s = json.dumps(data, indent=2)
-                f.write(s)
+            # Save to config using helper method
+            helper_caption = helper.get('caption', 'unknown')
+            self._save_label_to_config(key_labels, helper_caption, label)
 
     def config_label_save(self) -> None:
         """Configure on_save auto-formatting for formatters.
@@ -665,35 +719,30 @@ class Command:
         Enables/disables automatic formatting when file is saved.
         """
         while True:
-            caps = [item['caption']+(' -- on_save' if item['on_save'] else '')+
-                    '\t'+item['lexers'] for item in helpers.helpers]
+            caps = [
+                item.get('caption', 'Unknown') +
+                (' -- on_save' if item.get('on_save') else '') +
+                '\t' + item.get('lexers', '')
+                for item in helpers.helpers
+            ]
             res = app.dlg_menu(app.DMENU_LIST, caps, caption=_('Formatters label "on_save"'))
             if res is None:
                 return
 
             helper = helpers.helpers[res]
-            helper['on_save'] = not helper['on_save']
+            helper['on_save'] = not helper.get('on_save', False)
 
-            data = {}
-            if os.path.isfile(FN_CFG):
-                with open(FN_CFG, 'r', encoding='utf8') as f:
-                    data = json.load(f)
-
-            if 'on_save' in data:
-                if helper['on_save']:
-                    data['on_save'][helper['caption']] = True
-                else:
-                    del data['on_save'][helper['caption']]
-            else:
-                if helper['on_save']:
-                    data['on_save'] = {helper['caption']: True}
-
-            with open(FN_CFG, 'w', encoding='utf8') as f:
-                s = json.dumps(data, indent=2)
-                f.write(s)
+            # Save to config using helper method
+            helper_caption = helper.get('caption', 'unknown')
+            value = True if helper.get('on_save') else None
+            self._save_label_to_config('on_save', helper_caption, value)
 
     def format_label(self, label: str) -> None:
-        """Format using formatter with given per-lexer label (A/B/C/D)."""
+        """Format using formatter with given per-lexer label (A/B/C/D).
+
+        Args:
+            label: Label character to search for
+        """
 
         lexer = Helpers.get_editor_lexer()
         if not lexer:
@@ -718,7 +767,11 @@ class Command:
         app.msg_status(_('No formatter for "{}" with label "{}"').format(lexer, label))
 
     def format_label_x(self, label: str) -> None:
-        """Format using formatter with given cross-lexer label (1/2/3/4)."""
+        """Format using formatter with given cross-lexer label (1/2/3/4).
+
+        Args:
+            label: Label character to search for
+        """
 
         if len(ed.get_carets()) > 1:
             app.msg_status(_('Cannot handle multi-carets yet'))
