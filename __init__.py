@@ -2,6 +2,7 @@ import os
 import re
 import json
 import importlib
+from typing import List, Dict, Optional, Callable, Tuple, Any
 import cudatext as app
 from cudatext import ed
 from .fmtconfig import *
@@ -11,18 +12,110 @@ from cudax_lib import get_translation, get_opt
 _   = get_translation(__file__)  # i18n
 
 FN_CFG = os.path.join(app.app_path(app.APP_DIR_SETTINGS), 'cuda_fmt.json')
+MAX_FORMATTERS_PER_PLUGIN = 100
+README_PATH = os.path.join('readme', 'readme.txt')
+
+def _call_method_by_name(module: Any, method_name: str) -> None:
+    """Call a method from module by name with automatic Command fallback.
+
+    Strategy (KISS principle):
+    1. Try module-level function first: module.method_name()
+    2. If not found, try Command class: module.Command().method_name()
+
+    This ensures backward compatibility with simple functions while
+    supporting class-based plugins without requiring wrapper functions.
+
+    Args:
+        module: Imported module object
+        method_name: Method name (e.g., 'help', 'config')
+
+    Raises:
+        AttributeError: If method not found in module or Command class
+
+    Examples:
+        # Plugin with simple function
+        _call_method_by_name(my_module, 'help')  # calls my_module.help()
+
+        # Plugin with Command class
+        _call_method_by_name(my_module, 'help')  # calls my_module.Command().help()
+    """
+    # Try 1: Simple function at module level
+    if hasattr(module, method_name):
+        func = getattr(module, method_name)
+        # Make sure it's callable (not a variable)
+        if callable(func):
+            func()
+            return
+
+    # Try 2: Method in Command class (common pattern in CudaText plugins)
+    if hasattr(module, 'Command'):
+        cmd_class = getattr(module, 'Command')
+        # Instantiate Command class
+        if isinstance(cmd_class, type):
+            cmd_instance = cmd_class()
+            if hasattr(cmd_instance, method_name):
+                method = getattr(cmd_instance, method_name)
+                if callable(method):
+                    method()
+                    return
+
+    # If we get here, method was not found anywhere
+    raise AttributeError(
+        f'Method "{method_name}" not found as module function or Command.{method_name}'
+    )
+
+def _import_module_cached(module_path: str) -> Any:
+    """Import module using cache if available.
+
+    Args:
+        module_path: Module path to import (e.g., 'cuda_fmt_prettier')
+
+    Returns:
+        Imported module object
+
+    Raises:
+        ImportError: If module cannot be imported
+    """
+    if module_path in importlib.sys.modules:
+        return importlib.sys.modules[module_path]
+    return importlib.import_module(module_path)
 
 class Helpers:
+    """Manages formatter plugin loading and selection.
+
+    Formatters are loaded from install.inf files with sections:
+
+    Legacy mode (file-based config):
+        [fmtX]
+        config=myconfig.ini
+
+    New mode (method-based config/help):
+        [info]  # Global defaults
+        config_global=gen_global_config
+        config_local=gen_local_config
+        help=show_help
+
+        [fmtX]  # Override per formatter
+        config_global=custom_global
+        help=custom_help
+
+    Priority: [fmtX] > [info] > legacy config=
+    """
     helpers = []
 
-    def get_editor_lexer():
+    @staticmethod
+    def get_editor_lexer() -> Optional[str]:
+        """Get lexer at current caret position.
 
+        Returns:
+            Lexer name or None if unavailable/multi-caret/overlapping
+        """
         carets = ed.get_carets()
-        if len(carets)==0:
+        if len(carets) == 0:
             app.msg_status(_('Cannot handle none-carets'))
             return
 
-        if len(carets)>1:
+        if len(carets) > 1:
             app.msg_status(_('Cannot handle multi-carets yet'))
             return
 
@@ -31,8 +124,12 @@ class Helpers:
             error_max_size = False
             fn = ed.get_filename()
             if fn:
-                size = os.path.getsize(fn)
-                error_max_size = (size > get_opt('ui_max_size_lexer', 2)*1024*1024)
+                try:
+                    size = os.path.getsize(fn)
+                    error_max_size = (size > get_opt('ui_max_size_lexer', 2) * 1024 * 1024)
+                except (FileNotFoundError, OSError):
+                    # File deleted or inaccessible after get_filename()
+                    error_max_size = False
             if error_max_size:
                 app.msg_status(_('Cannot handle None-lexer; maybe file is big and "ui_max_size_lexer" blocks the lexer?'))
             else:
@@ -40,64 +137,87 @@ class Helpers:
             return
 
         x1, y1, x2, y2 = carets[0]
-        if y2<0:
+        if y2 < 0:
             return lexer0
 
-        if (y1, x1)>(y2, x2):
+        if (y1, x1) > (y2, x2):
             x1, y1, x2, y2 = x2, y2, x1, y1
 
         # decrease ending pos, it's often after the sub-lexer ending
-        if x2>0:
+        if x2 > 0:
             x2 -= 1
-        elif y2>0:
+        elif y2 > 0:
             y2 -= 1
             x2 = len(ed.get_text_line(y2))
 
         lexer1 = ed.get_prop(PROP_LEXER_POS, (x1, y1))
         lexer2 = ed.get_prop(PROP_LEXER_POS, (x2, y2))
-        if lexer1!=lexer2:
+        if lexer1 != lexer2:
             app.msg_status(_('Selection overlaps sub-lexer block: "{}"/"{}"').format(lexer1, lexer2))
             return
 
         return lexer1
 
+    def lexers(self) -> List[str]:
+        """Get sorted list of all supported lexers.
 
-    def lexers(self):
+        Returns:
+            Sorted list of unique lexer names
+        """
+        lexer_strings = [helper['lexers'] for helper in self.helpers]
+        all_lexers = ','.join(lexer_strings)
+        lexer_list = [lex for lex in all_lexers.split(',') if lex]
+        return sorted(set(lexer_list))
 
-        r = ''
-        for helper in self.helpers:
-            r += helper['lexers']+','
-        r = sorted(list(set(r.split(','))))
-        r.remove('')
-        return r
+    def helpers_for_lexer(self, lexer: str) -> Optional[List[Dict[str, Any]]]:
+        """Find all formatters supporting given lexer.
 
+        Args:
+            lexer: Lexer name to search for
 
-    def helpers_for_lexer(self, lexer):
+        Returns:
+            List of helper dicts, or None if lexer is empty/invalid.
+            Returns empty list [] if lexer is valid but no formatters found.
+        """
+        if lexer in ('', '-'):
+            return None
 
         res = []
-        if lexer in ('', '-'):
-            return
         for helper in self.helpers:
             for item in helper['lexers'].split(','):
                 if item.startswith('regex:'):
                     ok = re.match(item[6:], lexer)
                 else:
-                    ok = item==lexer
+                    ok = item == lexer
                 if ok:
                     res.append(helper)
+                    # break
         return res
 
+    def load_dir(self, plugin_dir: str) -> None:
+        """Load formatter plugins from directory.
 
-    def load_dir(self, dir):
+        Supports both legacy config files and new method-based config/help.
+        Priority: [fmtX] section > [info] section (for global defaults).
 
-        dirs = os.listdir(dir)
-        dirs = [os.path.join(dir, s) for s in dirs if s.startswith('cuda_fmt_')]
+        Args:
+            plugin_dir: Path to plugins directory
+        """
+        dirs = os.listdir(plugin_dir)
+        dirs = [os.path.join(plugin_dir, s) for s in dirs if s.startswith('cuda_fmt_')]
         dirs = sorted(dirs)
 
-        for dir in dirs:
-            fn_inf = os.path.join(dir, 'install.inf')
+        for formatter_dir in dirs:
+            fn_inf = os.path.join(formatter_dir, 'install.inf')
             s_module = app.ini_read(fn_inf, 'info', 'subdir', '')
-            for index in range(1, 100):
+
+            # Read global defaults from [info] section
+            global_config = app.ini_read(fn_inf, 'info', 'config', '')
+            global_config_global = app.ini_read(fn_inf, 'info', 'config_global', '')
+            global_config_local = app.ini_read(fn_inf, 'info', 'config_local', '')
+            global_help = app.ini_read(fn_inf, 'info', 'help', '')
+
+            for index in range(1, MAX_FORMATTERS_PER_PLUGIN):
                 section = 'fmt'+str(index)
                 s_method = app.ini_read(fn_inf, section, 'method', '')
                 if not s_method: break
@@ -105,18 +225,38 @@ class Helpers:
                 if not s_lexers: break
                 s_caption = app.ini_read(fn_inf, section, 'caption', '')
                 if not s_caption: break
+
+                # Legacy mode: config= (file-based)
                 s_config = app.ini_read(fn_inf, section, 'config', '')
-                force_all = app.ini_read(fn_inf, section, 'force_all', '')=='1'
-                minifier = app.ini_read(fn_inf, section, 'minifier', '')=='1'
+
+                # New mode: config_global=/config_local=/help= (method-based)
+                s_config_global = app.ini_read(fn_inf, section, 'config_global', '')
+                s_config_local = app.ini_read(fn_inf, section, 'config_local', '')
+                s_help = app.ini_read(fn_inf, section, 'help', '')
+
+                # Inherit from [info] if not specified in [fmtX]
+                if not s_config and not s_config_global:
+                    s_config = global_config
+                    s_config_global = global_config_global
+                if not s_config_local:
+                    s_config_local = global_config_local
+                if not s_help:
+                    s_help = global_help
+
+                force_all = app.ini_read(fn_inf, section, 'force_all', '') == '1'
+                minifier = app.ini_read(fn_inf, section, 'minifier', '') == '1'
 
                 helper = {
-                        'dir': dir,
+                        'dir': formatter_dir,
                         'module': s_module,
                         'method': s_method,
                         'func': None,
                         'lexers': s_lexers,
                         'caption': s_caption,
-                        'config': s_config,
+                        'config': s_config,  # Legacy: config file name
+                        'config_global': s_config_global,  # New: method name
+                        'config_local': s_config_local,    # New: method name
+                        'help': s_help,                    # New: method name
                         'force_all': force_all,
                         'minifier': minifier,
                         'label': None,
@@ -125,9 +265,19 @@ class Helpers:
 
                 self.helpers.append(helper)
 
+    def get_item_props(self, helper: dict) -> tuple:
+        """Get formatter properties and ensure function is loaded.
 
-    def get_item_props(self, helper):
+        Args:
+            helper: Formatter dictionary with module/method info
 
+        Returns:
+            Tuple of (func, caption, force_all)
+
+        Raises:
+            AttributeError: If method not found in module
+            ImportError: If module cannot be imported
+        """
         func = helper['func']
         caption = helper['caption']
         force_all = helper['force_all']
@@ -139,94 +289,96 @@ class Helpers:
 
         return (func, caption, force_all)
 
+    def get_props(self, lexer: str) -> Optional[Tuple[Callable, str, bool]]:
+        """Get formatter properties for lexer.
 
-    def get_props(self, lexer):
-
+        Returns:
+            Tuple of (func, caption, force_all) or None if no formatter/user cancelled
+        """
         d = self.helpers_for_lexer(lexer)
-        if not d: return
+        if not d:
+            return None
 
-        if len(d)==1:
+        if len(d) == 1:
             item = d[0]
         else:
             items = [item['caption'] for item in d]
             res = app.dlg_menu(app.DMENU_LIST, items, caption=_('Formatters for %s')%lexer)
-            if res is None: return False
+            if res is None:
+                return None  # User cancelled
             item = d[res]
 
         return self.get_item_props(item)
 
+    def get_props_on_save(self, lexer: str) -> Optional[Tuple[Callable, str, bool]]:
+        """Get formatter properties for on_save event.
 
-    def get_props_on_save(self, lexer):
+        Args:
+            lexer: Lexer name
 
+        Returns:
+            Tuple of (func, caption, force_all) or None if no formatter with on_save
+        """
         d = self.helpers_for_lexer(lexer)
-        if not d: return
+        if not d:
+            return None
 
         d = [h for h in d if h['on_save']]
-        if not d: return
+        if not d:
+            return None
         return self.get_item_props(d[0])
-
 
 helpers = Helpers()
 helpers.load_dir(app.app_path(app.APP_DIR_PY))
 print(_('Formatters: ') + ', '.join(helpers.lexers()))
 
+def get_config_filename(caption: str) -> Optional[str]:
+    """Get current config filename for formatter by caption.
 
-def get_config_filename(caption):
+    Args:
+        caption: Formatter caption to search for
 
+    Returns:
+        Path to config file or None if not found
+    """
     for helper in helpers.helpers:
-        if helper['caption']==caption and helper['config']:
+        if helper['caption'] == caption and helper['config']:
             cfg = FmtConfig(helper['config'], helper['dir'])
             return cfg.current_filename()
-
-
+    return None
 
 class Command:
 
-    def __init__(self):
+    def __init__(self) -> None:
 
         self.load_labels()
 
-
-    def load_labels(self):
-
+    def load_labels(self) -> None:
+        """Load formatter labels from config file."""
         if not os.path.isfile(FN_CFG):
             return
 
         with open(FN_CFG, 'r', encoding='utf8') as f:
-            all = json.load(f)
+            all_data = json.load(f)
 
-            data = all.get('labels')
+        # Define mappings: config_key -> helper_key
+        mappings = [
+            ('labels', 'label'),
+            ('labels_x', 'label_x'),
+            ('on_save', 'on_save'),
+        ]
+
+        for config_key, helper_key in mappings:
+            data = all_data.get(config_key)
             if data:
-                for key in data:
-                    val = data[key]
+                for caption, value in data.items():
                     for helper in helpers.helpers:
-                        if helper['caption'] == key:
-                            helper['label'] = val
-                            #print(helper)
-                            continue
+                        if helper['caption'] == caption:
+                            helper[helper_key] = value
+                            break
 
-            data = all.get('labels_x')
-            if data:
-                for key in data:
-                    val = data[key]
-                    for helper in helpers.helpers:
-                        if helper['caption'] == key:
-                            helper['label_x'] = val
-                            #print(helper)
-                            continue
-
-            data = all.get('on_save')
-            if data:
-                for key in data:
-                    val = data[key]
-                    for helper in helpers.helpers:
-                        if helper['caption'] == key:
-                            helper['on_save'] = val
-                            #print(helper)
-                            continue
-
-
-    def format(self):
+    def format(self) -> None:
+        """Format current file/selection using appropriate formatter for lexer."""
 
         lexer = Helpers.get_editor_lexer()
         if not lexer:
@@ -237,14 +389,11 @@ class Command:
             app.msg_status(_('No formatters for "%s"')%lexer)
             return
 
-        if res is False:
-            return
-
         func, caption, force_all = res
         run_format(ed, func, '['+caption+'] ', force_all)
 
-
-    def on_save_pre(self, ed_self):
+    def on_save_pre(self, ed_self: Any) -> None:
+        """Event handler: auto-format before save if configured."""
 
         lexer = ed_self.get_prop(app.PROP_LEXER_FILE)
         if not lexer:
@@ -257,59 +406,217 @@ class Command:
         func, caption, _ = res
         run_format(ed_self, func, '['+caption+'] ', True)
 
+    def config(self, is_global: bool) -> None:
+        """Open formatter configuration (global or local).
 
-    def config(self, is_global):
-
-        items = [item for item in helpers.helpers if item['config']]
-        if not items:
-            app.msg_status(_('No configurable formatters'))
+        Supports both legacy file-based config and new method-based config.
+        If only one formatter is configurable, opens it directly without menu.
+        Only shows formatters that support the current file's lexer.
+        """
+        # Get current lexer
+        lexer = Helpers.get_editor_lexer()
+        if not lexer:
             return
 
-        caps = ['%s\t%s'%(item['caption'], item['lexers']) for item in items]
+        # Get formatters for this lexer
+        all_items = helpers.helpers_for_lexer(lexer)
+        if not all_items:
+            app.msg_status(_('No formatters for "%s"') % lexer)
+            return
 
-        res = app.dlg_menu(app.DMENU_LIST, caps, caption=_('Formatters'))
-        if res is None: return
-        item = items[res]
+        # Filter items that have ANY config method
+        items = [item for item in all_items
+                 if item.get('config') or item.get('config_global') or item.get('config_local')]
 
-        cfg = FmtConfig(item['config'], item['dir'])
-        if is_global:
-            cfg.config_global()
+        if not items:
+            app.msg_status(_('No configurable formatters for "%s"') % lexer)
+            return
+
+        # If only one formatter, use it directly (same behavior as format())
+        if len(items) == 1:
+            item = items[0]
         else:
-            cfg.config_local()
+            # Multiple formatters: show menu
+            caps = ['%s\t%s' % (item['caption'], item['lexers']) for item in items]
+            res = app.dlg_menu(app.DMENU_LIST, caps, caption=_('Formatters for %s') % lexer)
+            if res is None:
+                return
+            item = items[res]
 
-    def config_global(self):
+        # Determine which config method to use
+        if is_global:
+            method_name = item.get('config_global')
+        else:
+            method_name = item.get('config_local')
 
+        # New method-based config (priority)
+        if method_name:
+            module_path = item.get('module')
+            if module_path:
+                try:
+                    # Import module (use cache if already loaded)
+                    _m = _import_module_cached(module_path)
+                    # Call method with automatic fallback to Command class
+                    _call_method_by_name(_m, method_name)
+                    return
+
+                except AttributeError as e:
+                    app.msg_status(_('Config method "%s" not found in module "%s"') %
+                                  (method_name, module_path))
+                    return
+                except ImportError as e:
+                    app.msg_status(_('Cannot import module "%s": %s') % (module_path, str(e)))
+                    return
+                except Exception as e:
+                    app.msg_status(_('Error calling config method: %s') % str(e))
+                    return
+
+        # Legacy file-based config (fallback)
+        if item.get('config'):
+            cfg = FmtConfig(item['config'], item['dir'])
+            if is_global:
+                cfg.config_global()
+            else:
+                cfg.config_local()
+        else:
+            app.msg_status(_('No configuration available for "%s"') % item['caption'])
+
+    def config_help(self) -> None:
+        """Show help for selected formatter.
+
+        Calls custom help method if available.
+        Automatically tries module function first, then Command class method.
+        If only one formatter has help, shows it directly without menu.
+        Only shows formatters that support the current file's lexer.
+        """
+        # Get current lexer
+        lexer = Helpers.get_editor_lexer()
+        if not lexer:
+            return
+
+        # Get formatters for this lexer
+        all_items = helpers.helpers_for_lexer(lexer)
+        if not all_items:
+            app.msg_status(_('No formatters for "%s"') % lexer)
+            return
+
+        # Filter items that have help method OR readme file
+        items = []
+        for item in all_items:
+            if item.get('help'):
+                items.append(item)
+            else:
+                readme = os.path.join(item['dir'], README_PATH)
+                if os.path.isfile(readme):
+                    items.append(item)
+
+        if not items:
+            app.msg_status(_('No formatters with help available for "%s"') % lexer)
+            return
+
+        # If only one formatter, use it directly (same behavior as format())
+        if len(items) == 1:
+            item = items[0]
+        else:
+            # Multiple formatters: show menu
+            caps = ['%s\t%s' % (item['caption'], item['lexers']) for item in items]
+            res = app.dlg_menu(app.DMENU_LIST, caps, caption=_('Formatter Help for %s') % lexer)
+            if res is None:
+                return
+            item = items[res]
+
+        method_name = item.get('help')
+
+        if method_name:
+            module_path = item.get('module')
+            if module_path:
+                try:
+                    _m = _import_module_cached(module_path)
+                    _call_method_by_name(_m, method_name)
+                    return
+
+                except AttributeError as e:
+                    app.msg_status(_('Help method "%s" not found in module "%s"') %
+                                  (method_name, module_path))
+                except ImportError as e:
+                    app.msg_status(_('Cannot import module "%s": %s') % (module_path, str(e)))
+                except Exception as e:
+                    app.msg_status(_('Error calling help method: %s') % str(e))
+
+        # Fallback: try readme (executes if no method_name OR if exception occurred)
+        readme = os.path.join(item['dir'], README_PATH)
+        if os.path.isfile(readme):
+            app.file_open(readme)
+        else:
+            app.msg_status(_('No help available for "%s"') % item['caption'])
+
+    def config_global(self) -> None:
+        """Open global formatter configuration.
+
+        Only shows formatters that support the current file's lexer.
+        Delegates to config(is_global=True).
+        """
         self.config(True)
 
-    def config_local(self):
+    def config_local(self) -> None:
+        """Open local formatter configuration for current file.
 
-        if not ed.get_filename():
-            msg_box(_('Cannot open local config for untitled tab'), MB_OK+MB_ICONWARNING)
+        Requires file to be saved (not untitled).
+        Only shows formatters that support the current file's lexer.
+        """
+        filename = ed.get_filename()
+
+        if not filename:
+            app.msg_box(
+                _('Cannot open local config for untitled tab'),
+                app.MB_OK + app.MB_ICONWARNING
+            )
             return
 
+        # Verify file exists on disk
+        if not os.path.isfile(filename):
+            app.msg_box(
+                _('File must be saved before creating local config'),
+                app.MB_OK + app.MB_ICONWARNING
+            )
+            return
+
+        # Delegate to config() which now filters by lexer
         self.config(False)
 
+    def config_labels(self) -> None:
+        """Configure per-lexer labels for formatters.
 
-    def config_labels(self):
-
+        Allows assigning labels A, B, C, D to formatters for quick access.
+        """
         self.config_labels_ex(
             _('Formatters per-lexer labels'),
             'ABCD',
             'label',
             'labels'
-            )
+        )
 
-    def config_labels_cross(self):
+    def config_labels_cross(self) -> None:
+        """Configure cross-lexer labels for formatters.
 
+        Allows assigning labels 1, 2, 3, 4 to formatters for cross-lexer access.
+        """
         self.config_labels_ex(
             _('Formatters cross-lexer labels'),
             '1234',
             'label_x',
             'labels_x'
-            )
+        )
 
-    def config_labels_ex(self, caption, chars, key_label, key_labels):
+    def config_labels_ex(self, caption: str, chars: str, key_label: str, key_labels: str) -> None:
+        """Configure labels for formatters (internal helper).
 
+        Args:
+            caption: Menu caption to display
+            chars: String of available label characters (e.g., 'ABCD' or '1234')
+            key_label: Dictionary key for individual formatter label (e.g., 'label' or 'label_x')
+            key_labels: Dictionary key for all labels in config (e.g., 'labels' or 'labels_x')
+        """
         while True:
             caps = [item['caption']+((' -- '+item[key_label]) if item.get(key_label) else '')+
                     '\t'+item['lexers'] for item in helpers.helpers]
@@ -327,7 +634,7 @@ class Command:
                 )
             if res is None:
                 continue
-            if res==0:
+            if res == 0:
                 label = None
             else:
                 label = ('_'+chars)[res]
@@ -352,9 +659,11 @@ class Command:
                 s = json.dumps(data, indent=2)
                 f.write(s)
 
+    def config_label_save(self) -> None:
+        """Configure on_save auto-formatting for formatters.
 
-    def config_label_save(self):
-
+        Enables/disables automatic formatting when file is saved.
+        """
         while True:
             caps = [item['caption']+(' -- on_save' if item['on_save'] else '')+
                     '\t'+item['lexers'] for item in helpers.helpers]
@@ -383,8 +692,8 @@ class Command:
                 s = json.dumps(data, indent=2)
                 f.write(s)
 
-
-    def format_label(self, label):
+    def format_label(self, label: str) -> None:
+        """Format using formatter with given per-lexer label (A/B/C/D)."""
 
         lexer = Helpers.get_editor_lexer()
         if not lexer:
@@ -396,7 +705,7 @@ class Command:
             return
 
         for helper in items:
-            if helper.get('label')==label:
+            if helper.get('label') == label:
                 func, caption, force_all = helpers.get_item_props(helper)
                 run_format(
                     ed,
@@ -408,15 +717,15 @@ class Command:
 
         app.msg_status(_('No formatter for "{}" with label "{}"').format(lexer, label))
 
+    def format_label_x(self, label: str) -> None:
+        """Format using formatter with given cross-lexer label (1/2/3/4)."""
 
-    def format_label_x(self, label):
-
-        if len(ed.get_carets())>1:
+        if len(ed.get_carets()) > 1:
             app.msg_status(_('Cannot handle multi-carets yet'))
             return
 
         for helper in helpers.helpers:
-            if helper.get('label_x')==label:
+            if helper.get('label_x') == label:
                 func, caption, force_all = helpers.get_item_props(helper)
                 run_format(
                     ed,
@@ -428,37 +737,44 @@ class Command:
 
         app.msg_status(_('No cross-lexer formatter with label "{}"').format(label))
 
+    def get_min_filename(self, fn: str) -> Tuple[str, str]:
+        """Generate minified filename.
 
-    def get_min_filename(self, fn):
+        Args:
+            fn: Original filename
 
+        Returns:
+            Tuple of (minified_filename, error_message)
+            If error_message is not empty, minified_filename will be empty string
+        """
         if not fn:
             return '', _('Cannot handle untitled tab')
 
-        dir = os.path.dirname(fn)
-        fn1 = os.path.basename(fn)
-        n = fn1.rfind('.')
-        if n<0:
+        file_dir = os.path.dirname(fn)
+        file_name = os.path.basename(fn)
+        dot_pos = file_name.rfind('.')
+        if dot_pos < 0:
             return '', _('File name does not contain "." char')
 
-        fn_new = dir + os.sep + fn1[:n] + '.min' + fn1[n:]
+        fn_new = os.path.join(file_dir, file_name[:dot_pos] + '.min' + file_name[dot_pos:])
         return fn_new, ''
 
-
-    def minify(self):
+    def minify(self) -> None:
+        """Minify current file to separate .min.ext file."""
 
         fn_new, error = self.get_min_filename(ed.get_filename())
         if not fn_new:
-            msg_status(error)
+            app.msg_status(error)
             return
 
         lexer = Helpers.get_editor_lexer()
         if not lexer:
-            msg_status(_('No lexer active'))
+            app.msg_status(_('No lexer active'))
             return
 
         items = helpers.helpers_for_lexer(lexer)
         if not items:
-            msg_status(_('No formatters for "%s"')%lexer)
+            app.msg_status(_('No formatters for "%s"')%lexer)
             return
 
         for helper in items:
@@ -466,49 +782,47 @@ class Command:
                 func, caption, force_all = helpers.get_item_props(helper)
                 text0 = ed.get_text_all()
                 text = func(text0)
-                is_same = text==text0
+                is_same = text == text0
                 del text0
                 if is_same:
-                    msg_status(_('Already minified'))
+                    app.msg_status(_('Already minified'))
                     return
                 with open(fn_new, 'w', encoding='utf-8') as f:
                     f.write(text)
-                msg_status(_('Minified to "%s"'%os.path.basename(fn_new)))
+                app.msg_status(_('Minified to "%s"'%os.path.basename(fn_new)))
                 file_open(fn_new, -1, '/passive')
                 return
 
         app.msg_status(_('No minifier for "%s"')%lexer)
 
-
-    def format_a(self):
+    def format_a(self) -> None:
 
         self.format_label('A')
 
-    def format_b(self):
+    def format_b(self) -> None:
 
         self.format_label('B')
 
-    def format_c(self):
+    def format_c(self) -> None:
 
         self.format_label('C')
 
-    def format_d(self):
+    def format_d(self) -> None:
 
         self.format_label('D')
 
-
-    def format_1(self):
+    def format_1(self) -> None:
 
         self.format_label_x('1')
 
-    def format_2(self):
+    def format_2(self) -> None:
 
         self.format_label_x('2')
 
-    def format_3(self):
+    def format_3(self) -> None:
 
         self.format_label_x('3')
 
-    def format_4(self):
+    def format_4(self) -> None:
 
         self.format_label_x('4')
