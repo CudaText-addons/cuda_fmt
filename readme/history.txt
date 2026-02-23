@@ -1,3 +1,6 @@
+2026.02.23
+- fix: avoid deprecated API ed.lock
+
 2026.01.03 (work by @Hanatarou)
 + add: added menu item "CudaFormatter / Formatter help...", which can call the method specified by key [info] help=method_name
 + add: added ability to set install.inf keys "config_global"/"config_local" both in [info] section and in [fmtX] sections
