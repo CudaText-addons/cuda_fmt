@@ -171,12 +171,12 @@ def run_format(ed, do_format, msg, force_all):
             if with_eol:
                 text1 = text1.rstrip('\n')
 
-            ed.lock()
+            ed.action(EDACTION_LOCK)
             try:
                 app_idle(True)
                 text = do_format(text1)
             finally:
-                ed.unlock()
+                ed.action(EDACTION_UNLOCK)
 
             if not text:
                 continue
@@ -204,12 +204,12 @@ def run_format(ed, do_format, msg, force_all):
         if not text1.strip():
             return
 
-        ed.lock()
+        ed.action(EDACTION_LOCK)
         try:
             app_idle(True)
             text = do_format(text1)
         finally:
-            ed.unlock()
+            ed.action(EDACTION_UNLOCK)
 
         if not text:
             msg_status(msg + _("Cannot format text"))
