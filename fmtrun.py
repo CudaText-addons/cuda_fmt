@@ -204,12 +204,16 @@ def run_format(ed, do_format, msg, force_all):
         if not text1.strip():
             return
 
-        ed.action(EDACTION_LOCK)
         try:
-            app_idle(True)
-            text = do_format(text1)
-        finally:
-            ed.action(EDACTION_UNLOCK)
+            ed.action(EDACTION_LOCK)
+            try:
+                app_idle(True)
+                text = do_format(text1)
+            finally:
+                ed.action(EDACTION_UNLOCK)
+        except Exception as e:
+            msg_box(_('Formatter gave exception:') + '\n\n' + str(e), MB_OK + MB_ICONERROR)
+            return
 
         if not text:
             msg_status(msg + _("Cannot format text"))
