@@ -1,3 +1,6 @@
+2025.03.07
++ add: handle formatter's exception (e.g. visible in the Black formatter on wrongly indented source code)
+
 2026.02.23
 - fix: avoid deprecated API ed.lock
 
